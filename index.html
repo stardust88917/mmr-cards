@@ -230,6 +230,11 @@
     .answer-scroll::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb); border-radius: 999px; }
     .ans-word { font-size: 27px; font-weight: 800; line-height: 1.35; }
     .ans-word.ko { font-size: 32px; }
+    .ans-word.ans-def-fallback { font-size: 18px; font-weight: 600; line-height: 1.55; }
+    .word-main.ja.word-def-fallback { font-size: 21px; font-weight: 600; line-height: 1.5; }
+    .ja-note { font-size: 11.5px; color: var(--text-light); margin-top: 8px; }
+    .card-back .ja-note { color: rgba(241,236,227,0.6); }
+    .ja-tag { display: inline-block; font-size: 10px; font-weight: 700; padding: 1px 6px; border-radius: 5px; background: var(--tag-bg); color: var(--tag-text); vertical-align: 2px; }
     .ans-block { margin-top: 14px; padding-top: 14px; border-top: 1px solid rgba(255,255,255,0.14); width: 100%; }
     .ans-lbl { font-size: 11px; font-weight: 700; letter-spacing: 1px; opacity: .55; text-transform: uppercase; margin-bottom: 5px; }
     .ans-def { font-size: 15px; line-height: 1.7; opacity: .92; }
@@ -622,6 +627,9 @@
     };
     function ic(name, cls) { return '<svg class="ic' + (cls ? ' ' + cls : '') + '" viewBox="0 0 24 24" aria-hidden="true">' + (ICONS[name] || '') + '</svg>'; }
     function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c])); }
+    // 일본어 표시 텍스트: 직역어(meaning)가 없으면 일본어 뜻풀이(transDfn)로 대체 → 빈 카드 방지
+    function jaMain(w) { return (w.meaning && w.meaning.trim()) ? w.meaning.trim() : (w.transDfn || "").trim(); }
+    function jaIsDef(w) { return !(w.meaning && w.meaning.trim()) && !!(w.transDfn && w.transDfn.trim()); }
     let toastT;
     function toast(msg, isErr) {
       const t = $("#toast"); t.textContent = msg; t.className = "toast show" + (isErr ? " err" : "");
@@ -755,7 +763,7 @@
     }
     // 일본어: 【..】(한자) 제거하고 읽기(가나)만, 여러 뜻은 첫 번째만
     function speakJapanese(w) {
-      const first = (w.meaning || "").split(/[。;,、\n]/)[0];
+      const first = jaMain(w).split(/[。;,、\n]/)[0];
       const clean = first.replace(/【[^】]*】/g, "").replace(/[()（）]/g, "").trim();
       speakTTS(clean || first, "ja-JP");
     }
@@ -806,6 +814,8 @@
       }
       const w = ui.queue[ui.qi];
       const dir = ui.direction;
+      const jm = jaMain(w);          // 일본어 표시(직역어 없으면 뜻풀이)
+      const jmDef = jaIsDef(w);      // 뜻풀이로 대체된 경우
       // 앞/뒤 내용 구성
       let front, back;
       if (dir === "ko-ja") {
@@ -816,16 +826,23 @@
           <button class="spk" id="spkFront" title="한국어 발음 듣기">${ic('volume')}</button>`;
         back = `<span class="face-label">日本語</span>
           <div class="answer-scroll">
-            <div class="ans-word ja">${esc(w.meaning)}</div>
+            ${jm
+              ? `<div class="ans-word ja${jmDef ? " ans-def-fallback" : ""}">${esc(jm)}</div>${jmDef ? `<div class="ja-note">일본어 직역어가 없어 뜻풀이로 표시</div>` : ""}`
+              : `<div class="ans-word" style="color:var(--card-back-text);opacity:.55;font-size:19px">일본어 번역 없음</div>`}
             <button class="spk" id="spkBack" title="日本語で聞く">${ic('volume')}</button>
-            ${w.transDfn ? `<div class="ans-block"><div class="ans-lbl">뜻풀이 (JP)</div><div class="ans-def ja">${esc(w.transDfn)}</div></div>` : ""}
+            ${(!jmDef && w.transDfn) ? `<div class="ans-block"><div class="ans-lbl">뜻풀이 (JP)</div><div class="ans-def ja">${esc(w.transDfn)}</div></div>` : ""}
             ${w.definition ? `<div class="ans-block"><div class="ans-lbl">뜻풀이 (KO)</div><div class="ans-def">${esc(w.definition)}</div></div>` : ""}
             ${w.example ? `<div class="ans-block"><div class="ans-lbl">예문</div><div class="ans-ex">${esc(w.example)}</div></div>` : ""}
           </div>`;
       } else {
-        front = `<span class="face-label">日本語</span>
-          <div class="word-main ja">${esc(w.meaning)}</div>
-          <button class="spk" id="spkFront" title="日本語で聞く">${ic('volume')}</button>`;
+        front = jm
+          ? `<span class="face-label">日本語</span>
+             <div class="word-main ja${jmDef ? " word-def-fallback" : ""}">${esc(jm)}</div>
+             ${jmDef ? `<div class="ja-note">직역어 없음 · 뜻풀이</div>` : ""}
+             <button class="spk" id="spkFront" title="日本語で聞く">${ic('volume')}</button>`
+          : `<span class="face-label">日本語</span>
+             <div class="ja-note" style="margin-bottom:12px">이 단어는 일본어 번역이 없어요</div>
+             <div class="word-main">${esc(w.word)}</div>`;
         back = `<span class="face-label">한국어</span>
           <div class="answer-scroll">
             <div class="ans-word ko">${esc(w.word)}</div>
@@ -928,7 +945,7 @@
           <div class="result" data-i="${i}">
             <div class="info">
               <div class="kline"><span class="kw">${esc(it.word)}</span>${it.pron ? `<span class="kp">[${esc(it.pron)}]</span>` : ""}${it.pos ? `<span class="badge">${esc(it.pos)}</span>` : ""}${it.grade ? `<span class="badge">${esc(it.grade)}</span>` : ""}</div>
-              ${it.meaning ? `<div class="jw ja">${esc(it.meaning)}</div>` : ""}
+              ${jaMain(it) ? `<div class="jw ja">${esc(jaMain(it))}${jaIsDef(it) ? ` <span class="ja-tag">뜻풀이</span>` : ""}</div>` : ""}
               ${it.definition ? `<div class="kd">${esc(it.definition)}</div>` : ""}
             </div>
             <button class="mini-btn add-btn" data-i="${i}">${ic('plus')} 추가</button>
@@ -1046,7 +1063,7 @@
           <span class="status-dot ${w.status === "known" ? "known" : w.status === "unknown" ? "unknown" : ""}" title="${w.status}"></span>
           <div class="info">
             <div><span class="iw">${esc(w.word)}</span>${w.pron ? `<span class="ip">[${esc(w.pron)}]</span>` : ""} <span class="deck-tag">${esc(w.deck)}</span></div>
-            <div class="im ja">${esc(w.meaning)}</div>
+            <div class="im ja">${jaMain(w) ? esc(jaMain(w)) : `<span style="color:var(--text-light)">일본어 번역 없음</span>`}${jaIsDef(w) ? ` <span class="ja-tag">뜻풀이</span>` : ""}</div>
             ${w.example ? `<div class="ie">${esc(w.example)}</div>` : ""}
           </div>
           <div class="item-acts">
