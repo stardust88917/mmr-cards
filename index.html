@@ -181,6 +181,15 @@
     .badges { position: absolute; top: 14px; right: 16px; display: flex; gap: 6px; }
     .badge { font-size: 11px; font-weight: 700; padding: 3px 9px; border-radius: 999px; background: var(--tag-bg); color: var(--tag-text); }
     .card-back .badge { background: rgba(255,255,255,0.15); color: var(--card-back-text); }
+    .spk {
+      margin-top: 16px; width: 46px; height: 46px; border-radius: 50%;
+      border: 1.5px solid var(--border); background: var(--surface-2); color: var(--text);
+      cursor: pointer; font-size: 20px; display: inline-grid; place-items: center;
+      transition: transform .12s ease, border-color .15s ease; flex: none;
+    }
+    .spk:hover { border-color: var(--primary); transform: scale(1.08); }
+    .spk:active { transform: scale(0.94); }
+    .card-back .spk { background: rgba(255,255,255,0.16); border-color: rgba(255,255,255,0.25); color: var(--card-back-text); }
 
     .word-main { font-size: 40px; font-weight: 800; letter-spacing: -0.5px; line-height: 1.2; }
     .word-main.ja { font-size: 34px; }
@@ -448,6 +457,7 @@
         deck: o.deck, word: o.word || "", pron: o.pron || "", pos: o.pos || "", grade: o.grade || "",
         meaning: o.meaning || "", transDfn: o.transDfn || "", definition: o.definition || "",
         example: o.example || "", targetCode: o.targetCode || "",
+        pronFileNo: o.pronFileNo || "",
         status: o.status || "new", createdAt: o.createdAt || Date.now(),
       };
     }
@@ -526,20 +536,26 @@
         };
       });
     }
-    async function apiViewExample(targetCode) {
-      if (!targetCode) return "";
+    // 상세(view)에서 예문 + 발음 음성 file_no 추출
+    async function apiViewDetail(targetCode) {
+      const out = { example: "", pronFileNo: "" };
+      if (!targetCode) return out;
       try {
         const res = await fetch("/api/view?target_code=" + encodeURIComponent(targetCode));
-        if (!res.ok) return "";
+        if (!res.ok) return out;
         const doc = parseXml(await res.text());
-        let picked = "";
+        // 예문 (문장 우선)
         for (const si of $$("sense_info", doc)) {
           const exs = $$("example_info", si);
           const sentence = exs.find(e => txt(e, "type") === "문장") || exs[0];
-          if (sentence) { picked = txt(sentence, "example"); if (picked) break; }
+          if (sentence) { out.example = txt(sentence, "example"); if (out.example) break; }
         }
-        return picked;
-      } catch (e) { return ""; }
+        // 발음 음성: pronunciation_info/link 의 file_no
+        const link = txt(doc, "pronunciation_info link");
+        const m = link.match(/file_no=(\d+)/);
+        if (m) out.pronFileNo = m[1];
+        return out;
+      } catch (e) { return out; }
     }
     // 프록시 살아있는지 가볍게 확인 (키 미설정/미배포면 회색·빨강)
     async function pingApi() {
@@ -556,6 +572,42 @@
         dot.className = "api-dot off";
         dot.title = "프록시에 연결할 수 없습니다 (vercel dev / 배포 필요)";
       }
+    }
+
+    /* ============================ 발음 재생 (krdict 녹음 + 브라우저 TTS) ============================ */
+    let currentAudio = null;
+    function stopSpeak() {
+      if (currentAudio) { try { currentAudio.pause(); } catch (e) {} currentAudio = null; }
+      if (window.speechSynthesis) speechSynthesis.cancel();
+    }
+    function playKrdictAudio(fileNo) {
+      return new Promise((resolve, reject) => {
+        stopSpeak();
+        const a = new Audio("/api/audio?file_no=" + encodeURIComponent(fileNo));
+        currentAudio = a;
+        a.onended = () => resolve(true);
+        a.onerror = () => reject(new Error("audio error"));
+        a.play().catch(reject);
+      });
+    }
+    function speakTTS(text, lang) {
+      if (!text) return;
+      stopSpeak();
+      if (!("speechSynthesis" in window)) { toast("이 브라우저는 음성 재생을 지원하지 않아요", true); return; }
+      const u = new SpeechSynthesisUtterance(text);
+      u.lang = lang; u.rate = 0.9;
+      speechSynthesis.speak(u);
+    }
+    // 한국어: krdict 실제 녹음이 있으면 재생, 없거나 실패하면 브라우저 음성으로 대체
+    function speakKorean(w) {
+      if (w.pronFileNo) { playKrdictAudio(w.pronFileNo).catch(() => speakTTS(w.word, "ko-KR")); }
+      else speakTTS(w.word, "ko-KR");
+    }
+    // 일본어: 【..】(한자) 제거하고 읽기(가나)만, 여러 뜻은 첫 번째만
+    function speakJapanese(w) {
+      const first = (w.meaning || "").split(/[。;,、\n]/)[0];
+      const clean = first.replace(/【[^】]*】/g, "").replace(/[()（）]/g, "").trim();
+      speakTTS(clean || first, "ja-JP");
     }
 
     /* ============================ 학습: 큐 구성 & 렌더 ============================ */
@@ -610,21 +662,25 @@
         front = `<span class="face-label">한국어</span>
           <div class="badges">${w.pos ? `<span class="badge">${esc(w.pos)}</span>` : ""}${w.grade ? `<span class="badge">${esc(w.grade)}</span>` : ""}</div>
           <div class="word-main">${esc(w.word)}</div>
-          ${w.pron ? `<div class="word-pron">[${esc(w.pron)}]</div>` : ""}`;
+          ${w.pron ? `<div class="word-pron">[${esc(w.pron)}]</div>` : ""}
+          <button class="spk" id="spkFront" title="한국어 발음 듣기">🔊</button>`;
         back = `<span class="face-label">日本語</span>
           <div class="answer-scroll">
             <div class="ans-word ja">${esc(w.meaning)}</div>
+            <button class="spk" id="spkBack" title="日本語で聞く">🔊</button>
             ${w.transDfn ? `<div class="ans-block"><div class="ans-lbl">뜻풀이 (JP)</div><div class="ans-def ja">${esc(w.transDfn)}</div></div>` : ""}
             ${w.definition ? `<div class="ans-block"><div class="ans-lbl">뜻풀이 (KO)</div><div class="ans-def">${esc(w.definition)}</div></div>` : ""}
             ${w.example ? `<div class="ans-block"><div class="ans-lbl">예문</div><div class="ans-ex">${esc(w.example)}</div></div>` : ""}
           </div>`;
       } else {
         front = `<span class="face-label">日本語</span>
-          <div class="word-main ja">${esc(w.meaning)}</div>`;
+          <div class="word-main ja">${esc(w.meaning)}</div>
+          <button class="spk" id="spkFront" title="日本語で聞く">🔊</button>`;
         back = `<span class="face-label">한국어</span>
           <div class="answer-scroll">
             <div class="ans-word ko">${esc(w.word)}</div>
             ${w.pron ? `<div class="word-pron" style="margin-top:6px;">[${esc(w.pron)}]</div>` : ""}
+            <button class="spk" id="spkBack" title="한국어 발음 듣기">🔊</button>
             ${w.definition ? `<div class="ans-block"><div class="ans-lbl">뜻풀이 (KO)</div><div class="ans-def">${esc(w.definition)}</div></div>` : ""}
             ${w.example ? `<div class="ans-block"><div class="ans-lbl">예문</div><div class="ans-ex">${esc(w.example)}</div></div>` : ""}
           </div>`;
@@ -653,6 +709,10 @@
       $("#nextBtn").addEventListener("click", next);
       $("#markKnown").addEventListener("click", () => mark("known"));
       $("#markUnknown").addEventListener("click", () => mark("unknown"));
+      // 스피커: 카드 뒤집힘 방지(stopPropagation) 후 해당 면의 언어로 발음
+      const spkF = $("#spkFront"), spkB = $("#spkBack");
+      if (spkF) spkF.addEventListener("click", (e) => { e.stopPropagation(); dir === "ko-ja" ? speakKorean(w) : speakJapanese(w); });
+      if (spkB) spkB.addEventListener("click", (e) => { e.stopPropagation(); dir === "ko-ja" ? speakJapanese(w) : speakKorean(w); });
     }
     function flip() { ui.flipped = !ui.flipped; const c = $("#cardInner"); if (c) c.classList.toggle("flipped", ui.flipped); }
     function next() { if (ui.qi < ui.queue.length - 1) { ui.qi++; ui.flipped = false; renderStudy(); } else { toast("마지막 단어입니다"); } }
@@ -710,8 +770,8 @@
         $$("#results .add-btn").forEach(b => b.addEventListener("click", async () => {
           const it = items[+b.dataset.i];
           b.disabled = true; b.innerHTML = '<span class="spin"></span>';
-          const example = await apiViewExample(it.targetCode);
-          addWord({ ...it, example, deck: $("#targetDeck").value });
+          const detail = await apiViewDetail(it.targetCode);
+          addWord({ ...it, example: detail.example, pronFileNo: detail.pronFileNo, deck: $("#targetDeck").value });
           b.textContent = "✓ 추가됨";
         }));
       } catch (e) {

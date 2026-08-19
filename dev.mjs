@@ -26,8 +26,11 @@ if (!process.env.KRDICT_KEY) {
   console.warn("⚠️  .env.local 에 KRDICT_KEY 가 없습니다. 사전 검색이 동작하지 않습니다.");
 }
 
-const searchHandler = (await import(pathToFileURL(path.join(ROOT, "api/search.js")).href)).default;
-const viewHandler = (await import(pathToFileURL(path.join(ROOT, "api/view.js")).href)).default;
+const apiHandlers = {
+  "/api/search": (await import(pathToFileURL(path.join(ROOT, "api/search.js")).href)).default,
+  "/api/view": (await import(pathToFileURL(path.join(ROOT, "api/view.js")).href)).default,
+  "/api/audio": (await import(pathToFileURL(path.join(ROOT, "api/audio.js")).href)).default,
+};
 
 const TYPES = {
   ".html": "text/html; charset=utf-8", ".js": "text/javascript; charset=utf-8",
@@ -47,11 +50,11 @@ http.createServer(async (req, res) => {
   const u = new URL(req.url, "http://localhost");
   const p = decodeURIComponent(u.pathname);
 
-  if (p === "/api/search" || p === "/api/view") {
+  if (apiHandlers[p]) {
     req.query = Object.fromEntries(u.searchParams);
     shimRes(res);
     try {
-      await (p === "/api/search" ? searchHandler : viewHandler)(req, res);
+      await apiHandlers[p](req, res);
     } catch (e) {
       res.statusCode = 500;
       res.end(JSON.stringify({ error: String(e) }));
