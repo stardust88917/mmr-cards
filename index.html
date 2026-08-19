@@ -7,6 +7,9 @@
   <title>일본어 단어장 · 日本語単語帳</title>
   <link rel="preconnect" href="https://cdn.jsdelivr.net" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@500;700&family=Zen+Old+Mincho:wght@500;700&display=swap" />
   <style>
     /* ============================ 테마 토큰 ============================ */
     :root {
@@ -39,6 +42,7 @@
       --radius-lg: 20px;
       --radius-md: 14px;
       --radius-sm: 10px;
+      --serif: 'Zen Old Mincho', 'Noto Serif KR', 'Nanum Myeongjo', serif;
     }
     :root[data-theme="dark"] {
       /* 다크 — 朱墨 미니멀: 먹빛 종이 + 주(朱) 포인트 */
@@ -86,6 +90,12 @@
       font-family: 'Yu Gothic', 'Meiryo', 'Hiragino Sans', 'Noto Sans JP',
                    'Pretendard', sans-serif;
     }
+    /* 라인 아이콘 (인라인 SVG) */
+    .ic { width: 1.1em; height: 1.1em; display: inline-block; vertical-align: -0.18em;
+      fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex: none; }
+    .ic-xl { width: 46px; height: 46px; stroke-width: 1.5; }
+    /* 明朝체 — 큰 단어·로고 (붓·먹 느낌) */
+    .word-main, .ans-word, .quiz-glyph, .logo .mark { font-family: var(--serif); font-weight: 700; }
 
     /* ============================ 네비게이션 ============================ */
     nav {
@@ -309,7 +319,7 @@
     @keyframes tutIn { from { opacity: 0; transform: translateY(16px) scale(.97); } to { opacity: 1; transform: none; } }
     .tutorial-skip { position: absolute; top: 16px; right: 18px; background: none; border: none; color: var(--text-light); font: inherit; font-size: 13px; cursor: pointer; }
     .tutorial-skip:hover { color: var(--text); }
-    .tut-icon { font-size: 52px; line-height: 1; margin-bottom: 14px; }
+    .tut-icon { line-height: 1; margin-bottom: 16px; color: var(--primary); }
     .tut-title { font-size: 20px; font-weight: 800; letter-spacing: -0.3px; margin-bottom: 12px; }
     .tut-desc { font-size: 15px; line-height: 1.7; color: var(--text-light); min-height: 80px; }
     .tut-desc b { color: var(--text); }
@@ -389,7 +399,7 @@
     <div class="nav-right">
       <span id="apiDot" class="api-dot" title="사전 API 상태"></span>
       <button id="helpBtn" class="icon-btn" title="사용법 다시 보기">?</button>
-      <button id="themeBtn" class="icon-btn" title="테마 전환">🌙</button>
+      <button id="themeBtn" class="icon-btn" title="테마 전환" aria-label="테마 전환"></button>
     </div>
   </nav>
 
@@ -408,7 +418,7 @@
             <button data-st="todo">모름</button>
             <button data-st="known">외움</button>
           </div>
-          <button id="shuffleBtn" class="mini-btn">🔀 섞기</button>
+          <button id="shuffleBtn" class="mini-btn"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 4l3 3-3 3"/><path d="M18 14l3 3-3 3"/><path d="M3 7h3.5c1.5 0 2.5.6 3.5 2"/><path d="M21 7h-4.5c-2.5 0-4 3-6 6.5S7.5 17 5 17H3"/><path d="M21 17h-3"/></svg>섞기</button>
         </div>
         <div class="progress"><i id="progFill"></i></div>
         <div id="progTxt" class="progress-txt"></div>
@@ -423,7 +433,7 @@
     <div class="wrap-wide">
       <!-- 사전 검색 -->
       <div class="panel">
-        <h2>🔎 사전에서 단어 추가</h2>
+        <h2><svg class="ic" style="color:var(--primary);margin-right:7px" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>사전에서 단어 추가</h2>
         <p class="desc">국립국어원 한국어기초사전에서 한국어 단어를 검색해 일본어 뜻·발음·예문을 자동으로 채웁니다.</p>
         <div class="search-row">
           <input type="text" id="searchInput" placeholder="한국어 단어 검색 (예: 나무, 학교, 공부하다)" autocomplete="off" />
@@ -438,7 +448,7 @@
 
       <!-- 직접 추가 -->
       <div class="panel">
-        <h2>✍️ 직접 추가 / 수정</h2>
+        <h2><svg class="ic" style="color:var(--primary);margin-right:7px" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>직접 추가 / 수정</h2>
         <p class="desc">사전에 없는 단어를 직접 넣거나 내용을 다듬을 수 있습니다.</p>
         <form id="manualForm">
           <input type="hidden" id="editId" />
@@ -460,14 +470,14 @@
 
       <!-- 단어장 관리 -->
       <div class="panel">
-        <h2>📚 단어장</h2>
+        <h2><svg class="ic" style="color:var(--primary);margin-right:7px" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>단어장</h2>
         <div class="deck-bar" id="deckManageBar"></div>
       </div>
 
       <!-- 목록 -->
       <div class="panel">
         <div class="list-head">
-          <h2 style="margin:0;">📝 내 단어 <span class="count" id="wordCount"></span></h2>
+          <h2 style="margin:0;"><svg class="ic" style="color:var(--primary);margin-right:7px" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M8 13h8M8 17h8M8 9h2"/></svg>내 단어 <span class="count" id="wordCount"></span></h2>
           <div style="display:flex; gap:8px; align-items:center;">
             <button class="link-btn" id="exportBtn">내보내기(JSON)</button>
             <button class="link-btn" id="importBtn">가져오기</button>
@@ -572,6 +582,26 @@
     /* ============================ 유틸 ============================ */
     const $ = (s, r = document) => r.querySelector(s);
     const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+
+    /* ============================ 라인 아이콘 ============================ */
+    const ICONS = {
+      shuffle: '<path d="M18 4l3 3-3 3"/><path d="M18 14l3 3-3 3"/><path d="M3 7h3.5c1.5 0 2.5.6 3.5 2"/><path d="M21 7h-4.5c-2.5 0-4 3-6 6.5S7.5 17 5 17H3"/><path d="M21 17h-3"/>',
+      volume: '<path d="M11 5 6 9H2v6h4l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M18.5 6a9 9 0 0 1 0 12"/>',
+      search: '<circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/>',
+      pencil: '<path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/>',
+      book: '<path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>',
+      list: '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M8 13h8M8 17h8M8 9h2"/>',
+      plus: '<path d="M12 5v14M5 12h14"/>',
+      trash: '<path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M10 11v6M14 11v6"/>',
+      moon: '<path d="M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8z"/>',
+      sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',
+      inbox: '<path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.4 5.1 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.4-6.9A2 2 0 0 0 16.8 4H7.2a2 2 0 0 0-1.8 1.1z"/>',
+      refresh: '<path d="M21 4v6h-6"/><path d="M3 20v-6h6"/><path d="M3.5 9a9 9 0 0 1 14.9-3.4L21 8M3 16l2.6 2.4A9 9 0 0 0 20.5 15"/>',
+      type: '<path d="M4 7V4h16v3"/><path d="M9 20h6"/><path d="M12 4v16"/>',
+      check: '<path d="M20 6 9 17l-5-5"/>',
+      x: '<path d="M18 6 6 18M6 6l12 12"/>',
+    };
+    function ic(name, cls) { return '<svg class="ic' + (cls ? ' ' + cls : '') + '" viewBox="0 0 24 24" aria-hidden="true">' + (ICONS[name] || '') + '</svg>'; }
     function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c])); }
     let toastT;
     function toast(msg, isErr) {
@@ -582,7 +612,7 @@
     /* ============================ 테마 ============================ */
     function applyTheme(theme) {
       document.documentElement.setAttribute("data-theme", theme);
-      $("#themeBtn").textContent = theme === "dark" ? "☀️" : "🌙";
+      $("#themeBtn").innerHTML = ic(theme === "dark" ? "sun" : "moon");
       $('meta[name="theme-color"]').setAttribute("content", theme === "dark" ? "#0f172a" : "#f0f2f5");
       localStorage.setItem(THEME_KEY, theme);
     }
@@ -750,7 +780,7 @@
       const area = $("#studyArea");
       updateProgress();
       if (!ui.queue.length) {
-        area.innerHTML = `<div class="empty"><div class="big">🗂️</div>
+        area.innerHTML = `<div class="empty"><div class="big">${ic('inbox', 'ic-xl')}</div>
           <h3>학습할 단어가 없습니다</h3>
           <p>‘단어 관리’ 탭에서 사전을 검색해 단어를 추가해 보세요.</p></div>`;
         return;
@@ -764,11 +794,11 @@
           <div class="badges">${w.pos ? `<span class="badge">${esc(w.pos)}</span>` : ""}${w.grade ? `<span class="badge">${esc(w.grade)}</span>` : ""}</div>
           <div class="word-main">${esc(w.word)}</div>
           ${w.pron ? `<div class="word-pron">[${esc(w.pron)}]</div>` : ""}
-          <button class="spk" id="spkFront" title="한국어 발음 듣기">🔊</button>`;
+          <button class="spk" id="spkFront" title="한국어 발음 듣기">${ic('volume')}</button>`;
         back = `<span class="face-label">日本語</span>
           <div class="answer-scroll">
             <div class="ans-word ja">${esc(w.meaning)}</div>
-            <button class="spk" id="spkBack" title="日本語で聞く">🔊</button>
+            <button class="spk" id="spkBack" title="日本語で聞く">${ic('volume')}</button>
             ${w.transDfn ? `<div class="ans-block"><div class="ans-lbl">뜻풀이 (JP)</div><div class="ans-def ja">${esc(w.transDfn)}</div></div>` : ""}
             ${w.definition ? `<div class="ans-block"><div class="ans-lbl">뜻풀이 (KO)</div><div class="ans-def">${esc(w.definition)}</div></div>` : ""}
             ${w.example ? `<div class="ans-block"><div class="ans-lbl">예문</div><div class="ans-ex">${esc(w.example)}</div></div>` : ""}
@@ -776,12 +806,12 @@
       } else {
         front = `<span class="face-label">日本語</span>
           <div class="word-main ja">${esc(w.meaning)}</div>
-          <button class="spk" id="spkFront" title="日本語で聞く">🔊</button>`;
+          <button class="spk" id="spkFront" title="日本語で聞く">${ic('volume')}</button>`;
         back = `<span class="face-label">한국어</span>
           <div class="answer-scroll">
             <div class="ans-word ko">${esc(w.word)}</div>
             ${w.pron ? `<div class="word-pron" style="margin-top:6px;">[${esc(w.pron)}]</div>` : ""}
-            <button class="spk" id="spkBack" title="한국어 발음 듣기">🔊</button>
+            <button class="spk" id="spkBack" title="한국어 발음 듣기">${ic('volume')}</button>
             ${w.definition ? `<div class="ans-block"><div class="ans-lbl">뜻풀이 (KO)</div><div class="ans-def">${esc(w.definition)}</div></div>` : ""}
             ${w.example ? `<div class="ans-block"><div class="ans-lbl">예문</div><div class="ans-ex">${esc(w.example)}</div></div>` : ""}
           </div>`;
@@ -799,8 +829,8 @@
           <button class="btn btn-ghost" id="nextBtn">다음 →</button>
         </div>
         <div class="mark-row">
-          <button class="btn btn-unknown" id="markUnknown">✕ 다시</button>
-          <button class="btn btn-known" id="markKnown">✓ 외웠어요</button>
+          <button class="btn btn-unknown" id="markUnknown">${ic('x')} 다시</button>
+          <button class="btn btn-known" id="markKnown">${ic('check')} 외웠어요</button>
         </div>
         <div class="hint"><kbd>Space</kbd> 뒤집기 · <kbd>←</kbd> <kbd>→</kbd> 이동 · <kbd>1</kbd> 다시 · <kbd>2</kbd> 외움</div>`;
 
@@ -822,7 +852,7 @@
       const w = ui.queue[ui.qi]; if (!w) return;
       const real = db.words.find(x => x.id === w.id); if (real) { real.status = status; save(); }
       w.status = status;
-      toast(status === "known" ? "외운 단어로 표시했어요 ✓" : "다시 볼 단어로 표시했어요");
+      toast(status === "known" ? "외운 단어로 표시했어요" : "다시 볼 단어로 표시했어요");
       if (ui.qi < ui.queue.length - 1) next(); else renderStudy();
     }
 
@@ -835,7 +865,7 @@
       $$("#statusSeg button").forEach(x => x.classList.remove("active")); b.classList.add("active");
       ui.statusFilter = b.dataset.st; rebuildQueue();
     }));
-    $("#shuffleBtn").addEventListener("click", () => { rebuildQueue(true); toast("섞었습니다 🔀"); });
+    $("#shuffleBtn").addEventListener("click", () => { rebuildQueue(true); toast("섞었습니다"); });
 
     // 키보드 단축키 (학습 페이지에서만)
     document.addEventListener("keydown", (e) => {
@@ -866,14 +896,14 @@
               ${it.meaning ? `<div class="jw ja">${esc(it.meaning)}</div>` : ""}
               ${it.definition ? `<div class="kd">${esc(it.definition)}</div>` : ""}
             </div>
-            <button class="mini-btn add-btn" data-i="${i}">＋ 추가</button>
+            <button class="mini-btn add-btn" data-i="${i}">${ic('plus')} 추가</button>
           </div>`).join("");
         $$("#results .add-btn").forEach(b => b.addEventListener("click", async () => {
           const it = items[+b.dataset.i];
           b.disabled = true; b.innerHTML = '<span class="spin"></span>';
           const detail = await apiViewDetail(it.targetCode);
           addWord({ ...it, example: detail.example, pronFileNo: detail.pronFileNo, deck: $("#targetDeck").value });
-          b.textContent = "✓ 추가됨";
+          b.innerHTML = ic('check') + " 추가됨";
         }));
       } catch (e) {
         box.innerHTML = `<div style="color:var(--danger);font-size:13px;padding:6px 2px;">${esc(e.message)}</div>`;
@@ -943,8 +973,8 @@
       bar.innerHTML = db.decks.map(d => {
         const n = db.words.filter(w => w.deck === d).length;
         return `<span class="chip" style="cursor:default;">${esc(d)} <span style="opacity:.6;">${n}</span>
-          <button class="link-btn del-deck" data-d="${esc(d)}" style="color:var(--danger); margin-left:6px;">✕</button></span>`;
-      }).join("") + `<button class="mini-btn" id="addDeck">＋ 새 단어장</button>`;
+          <button class="link-btn del-deck" data-d="${esc(d)}" style="color:var(--danger); margin-left:6px;">${ic('x')}</button></span>`;
+      }).join("") + `<button class="mini-btn" id="addDeck">${ic('plus')} 새 단어장</button>`;
       $("#addDeck").addEventListener("click", () => {
         const name = prompt("새 단어장 이름:");
         if (!name) return;
@@ -985,8 +1015,8 @@
             ${w.example ? `<div class="ie">${esc(w.example)}</div>` : ""}
           </div>
           <div class="item-acts">
-            <button class="sq edit" data-id="${esc(w.id)}" title="수정">✎</button>
-            <button class="sq del" data-id="${esc(w.id)}" title="삭제">🗑</button>
+            <button class="sq edit" data-id="${esc(w.id)}" title="수정" aria-label="수정">${ic('pencil')}</button>
+            <button class="sq del" data-id="${esc(w.id)}" title="삭제" aria-label="삭제">${ic('trash')}</button>
           </div>
         </div>`).join("");
       $$("#wordList .edit").forEach(b => b.addEventListener("click", () => editWord(b.dataset.id)));
@@ -1072,7 +1102,7 @@
         `<div class="kana-section"><h3>청음 (清音)</h3><div class="kana-grid">${kanaGridCells(KANA.seion)}</div></div>
          <div class="kana-section"><h3>탁음·반탁음 (濁音·半濁音)</h3><div class="kana-grid">${kanaGridCells(KANA.dakuten)}</div></div>
          <div class="kana-section"><h3>요음 (拗音)</h3><div class="kana-grid yoon">${kanaGridCells(KANA.yoon)}</div></div>
-         <p class="kana-hint">글자를 누르면 발음이 나옵니다 🔊</p>`;
+         <p class="kana-hint">글자를 누르면 발음이 나옵니다 ${ic('volume')}</p>`;
       $$("#kanaBody .kana-cell[data-h]").forEach(b => b.addEventListener("click", () => speakKana(b.dataset.h)));
     }
 
@@ -1118,7 +1148,7 @@
         : `<div class="quiz-glyph romaji">${esc(ans.romaji)}</div>`;
       const optHTML = opts.map(o =>
         `<button class="quiz-opt ${dir === "r2k" ? "ja" : ""}" data-r="${esc(o.romaji)}">${esc(dir === "k2r" ? o.romaji : kanaGlyph(o.h))}</button>`).join("");
-      $("#quizArea").innerHTML = `<button class="spk quiz-spk" id="qSpk" title="발음 듣기">🔊</button>${promptHTML}<div class="quiz-opts">${optHTML}</div>`;
+      $("#quizArea").innerHTML = `<button class="spk quiz-spk" id="qSpk" title="발음 듣기">${ic('volume')}</button>${promptHTML}<div class="quiz-opts">${optHTML}</div>`;
       $("#qSpk").addEventListener("click", () => speakKana(ans.h));
       $$("#quizArea .quiz-opt").forEach(b => b.addEventListener("click", () => answerKana(b, ans)));
     }
@@ -1151,23 +1181,23 @@
     /* ============================ 첫 접속 튜토리얼 ============================ */
     const TUT_KEY = "jpko_tutorial_seen";
     const TUTORIAL = [
-      { icon: "📕", title: "일본어 단어장에 오신 걸 환영해요", desc: "국립국어원 사전으로 <b>한국어–일본어 단어</b>를 만들고, 카드로 외우고, <b>히라가나·가타카나</b>까지 연습할 수 있어요." },
-      { icon: "🔎", title: "① 단어 추가하기", desc: "<b>‘단어 관리’</b>에서 한국어를 검색하면 일본어 뜻·발음·예문이 <b>자동 완성</b>! <b>＋추가</b>만 누르면 끝이에요.",
+      { icon: "book", title: "일본어 단어장에 오신 걸 환영해요", desc: "국립국어원 사전으로 <b>한국어–일본어 단어</b>를 만들고, 카드로 외우고, <b>히라가나·가타카나</b>까지 연습할 수 있어요." },
+      { icon: "search", title: "① 단어 추가하기", desc: "<b>‘단어 관리’</b>에서 한국어를 검색하면 일본어 뜻·발음·예문이 <b>자동 완성</b>! <b>＋추가</b>만 누르면 끝이에요.",
         visual: `<div class="tut-demo">
-            <div class="tut-demo-search"><span>🔎</span><span class="kw">바다</span><span class="tut-demo-btn">검색</span></div>
+            <div class="tut-demo-search"><span>${ic('search')}</span><span class="kw">바다</span><span class="tut-demo-btn">검색</span></div>
             <div class="tut-demo-arrow">↓</div>
             <div class="tut-demo-result">
               <div class="info"><span class="kw">바다</span><span class="kp">[바다]</span><div class="jp ja">うみ【海】</div></div>
-              <span class="tut-demo-add pulse">＋ 추가</span>
+              <span class="tut-demo-add pulse">${ic('plus')} 추가</span>
             </div>
           </div>` },
-      { icon: "🔄", title: "② 카드로 학습하기", desc: "<b>‘학습’</b> 탭에서 카드를 눌러 뒤집고, <b>🔊</b>로 발음을 듣고, 외운/모르는 단어를 표시하세요. 한→일·일→한 방향도 바꿀 수 있어요." },
-      { icon: "🈂️", title: "③ 가나 익히기", desc: "<b>‘가나’</b> 탭에서 오십음도 표로 발음을 듣거나, <b>퀴즈</b>로 히라가나·가타카나를 연습하세요." },
+      { icon: "refresh", title: "② 카드로 학습하기", desc: "<b>‘학습’</b> 탭에서 카드를 눌러 뒤집고, 발음 버튼으로 소리를 듣고, 외운/모르는 단어를 표시하세요. 한→일·일→한 방향도 바꿀 수 있어요." },
+      { icon: "type", title: "③ 가나 익히기", desc: "<b>‘가나’</b> 탭에서 오십음도 표로 발음을 듣거나, <b>퀴즈</b>로 히라가나·가타카나를 연습하세요." },
     ];
     let tutStep = 0;
     function renderTutorial() {
       const s = TUTORIAL[tutStep];
-      $("#tutBody").innerHTML = `<div class="tut-icon">${s.icon}</div><h2 class="tut-title">${esc(s.title)}</h2><p class="tut-desc">${s.desc}</p>${s.visual || ""}`;
+      $("#tutBody").innerHTML = `<div class="tut-icon">${ic(s.icon, "ic-xl")}</div><h2 class="tut-title">${esc(s.title)}</h2><p class="tut-desc">${s.desc}</p>${s.visual || ""}`;
       $("#tutDots").innerHTML = TUTORIAL.map((_, i) => `<span class="tut-dot ${i === tutStep ? "active" : ""}"></span>`).join("");
       $("#tutPrev").style.visibility = tutStep === 0 ? "hidden" : "visible";
       $("#tutNext").textContent = tutStep === TUTORIAL.length - 1 ? "시작하기 🚀" : "다음";
