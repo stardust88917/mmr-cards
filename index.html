@@ -300,6 +300,34 @@
     .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
     .toast.err { background: var(--danger); }
 
+    /* ============================ 가나 학습 ============================ */
+    .kana-controls { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; margin-bottom: 22px; }
+    .kana-section { margin-bottom: 26px; }
+    .kana-section h3 { font-size: 14px; font-weight: 700; color: var(--text-light); text-align: center; margin-bottom: 12px; }
+    .kana-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; max-width: 520px; margin: 0 auto; }
+    .kana-grid.yoon { grid-template-columns: repeat(3, 1fr); max-width: 360px; }
+    .kana-cell { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
+      padding: 10px 4px; min-height: 60px; border: 1px solid var(--border); border-radius: var(--radius-sm);
+      background: var(--surface); color: var(--text); cursor: pointer; transition: transform .12s ease, border-color .12s ease; }
+    .kana-cell:hover { border-color: var(--primary); background: var(--surface-2); transform: translateY(-1px); }
+    .kana-cell.empty { border: none; background: transparent; cursor: default; }
+    .kana-cell .kc { font-size: 25px; font-weight: 700; line-height: 1; }
+    .kana-cell .kr { font-size: 11px; color: var(--text-light); }
+    .kana-hint { text-align: center; color: var(--text-light); font-size: 13px; margin-top: 6px; }
+    .quiz-top { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap;
+      max-width: 520px; margin: 0 auto 26px; }
+    .quiz-score { font-size: 14px; color: var(--text-light); }
+    .quiz-score b { color: var(--text); font-size: 16px; }
+    #quizArea { max-width: 520px; margin: 0 auto; display: flex; flex-direction: column; align-items: center; }
+    .quiz-glyph { font-size: 92px; font-weight: 800; line-height: 1; margin: 4px 0 22px; }
+    .quiz-glyph.romaji { font-size: 60px; }
+    .quiz-opts { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; width: 100%; }
+    .quiz-opt { padding: 18px; font-size: 22px; font-weight: 700; border: 1.5px solid var(--border);
+      border-radius: var(--radius-md); background: var(--surface); color: var(--text); cursor: pointer; transition: all .12s ease; }
+    .quiz-opt:hover:not(:disabled) { border-color: var(--primary); }
+    .quiz-opt.correct { background: var(--success); color: #fff; border-color: var(--success); }
+    .quiz-opt.wrong { background: var(--danger); color: #fff; border-color: var(--danger); }
+
     /* ============================ 반응형 ============================ */
     @media (max-width: 560px) {
       nav { gap: 8px; padding: 0 12px; }
@@ -319,6 +347,7 @@
     <div class="tabs">
       <button class="tab active" data-page="study">학습</button>
       <button class="tab" data-page="manage">단어 관리</button>
+      <button class="tab" data-page="kana">가나</button>
     </div>
     <div class="nav-right">
       <span id="apiDot" class="api-dot" title="사전 API 상태"></span>
@@ -413,6 +442,23 @@
     </div>
   </section>
 
+  <!-- ==================== 가나 학습 페이지 ==================== -->
+  <section id="page-kana" class="page">
+    <div class="wrap-wide">
+      <div class="kana-controls">
+        <div class="seg" id="kanaScript">
+          <button data-script="hira" class="active">히라가나</button>
+          <button data-script="kata">가타카나</button>
+        </div>
+        <div class="seg" id="kanaMode">
+          <button data-mode="chart" class="active">표</button>
+          <button data-mode="quiz">퀴즈</button>
+        </div>
+      </div>
+      <div id="kanaBody"></div>
+    </div>
+  </section>
+
   <div id="toast" class="toast"></div>
 
   <script>
@@ -449,6 +495,8 @@
       queue: [],
       qi: 0,
       flipped: false,
+      kanaScript: "hira",       // hira | kata
+      kanaMode: "chart",        // chart | quiz
     };
 
     function mkWord(o) {
@@ -499,8 +547,10 @@
       const p = tab.dataset.page;
       $("#page-study").classList.toggle("active", p === "study");
       $("#page-manage").classList.toggle("active", p === "manage");
+      $("#page-kana").classList.toggle("active", p === "kana");
       if (p === "study") rebuildQueue();
       if (p === "manage") renderManage();
+      if (p === "kana") renderKana();
     }));
 
     /* ============================ 사전 API (프록시 호출 + XML 파싱) ============================ */
@@ -917,6 +967,135 @@
       reader.readAsText(file);
       e.target.value = "";
     });
+
+    /* ============================ 가나(오십음도) 학습 ============================ */
+    const KANA = {
+      seion: [
+        [["a","あ"],["i","い"],["u","う"],["e","え"],["o","お"]],
+        [["ka","か"],["ki","き"],["ku","く"],["ke","け"],["ko","こ"]],
+        [["sa","さ"],["shi","し"],["su","す"],["se","せ"],["so","そ"]],
+        [["ta","た"],["chi","ち"],["tsu","つ"],["te","て"],["to","と"]],
+        [["na","な"],["ni","に"],["nu","ぬ"],["ne","ね"],["no","の"]],
+        [["ha","は"],["hi","ひ"],["fu","ふ"],["he","へ"],["ho","ほ"]],
+        [["ma","ま"],["mi","み"],["mu","む"],["me","め"],["mo","も"]],
+        [["ya","や"],null,["yu","ゆ"],null,["yo","よ"]],
+        [["ra","ら"],["ri","り"],["ru","る"],["re","れ"],["ro","ろ"]],
+        [["wa","わ"],null,null,null,["wo","を"]],
+        [["n","ん"],null,null,null,null],
+      ],
+      dakuten: [
+        [["ga","が"],["gi","ぎ"],["gu","ぐ"],["ge","げ"],["go","ご"]],
+        [["za","ざ"],["ji","じ"],["zu","ず"],["ze","ぜ"],["zo","ぞ"]],
+        [["da","だ"],["ji","ぢ"],["zu","づ"],["de","で"],["do","ど"]],
+        [["ba","ば"],["bi","び"],["bu","ぶ"],["be","べ"],["bo","ぼ"]],
+        [["pa","ぱ"],["pi","ぴ"],["pu","ぷ"],["pe","ぺ"],["po","ぽ"]],
+      ],
+      yoon: [
+        [["kya","きゃ"],["kyu","きゅ"],["kyo","きょ"]],
+        [["sha","しゃ"],["shu","しゅ"],["sho","しょ"]],
+        [["cha","ちゃ"],["chu","ちゅ"],["cho","ちょ"]],
+        [["nya","にゃ"],["nyu","にゅ"],["nyo","にょ"]],
+        [["hya","ひゃ"],["hyu","ひゅ"],["hyo","ひょ"]],
+        [["mya","みゃ"],["myu","みゅ"],["myo","みょ"]],
+        [["rya","りゃ"],["ryu","りゅ"],["ryo","りょ"]],
+        [["gya","ぎゃ"],["gyu","ぎゅ"],["gyo","ぎょ"]],
+        [["ja","じゃ"],["ju","じゅ"],["jo","じょ"]],
+        [["bya","びゃ"],["byu","びゅ"],["byo","びょ"]],
+        [["pya","ぴゃ"],["pyu","ぴゅ"],["pyo","ぴょ"]],
+      ],
+    };
+    function toKatakana(h) {
+      return [...h].map(c => { const n = c.charCodeAt(0); return (n >= 0x3041 && n <= 0x3096) ? String.fromCharCode(n + 0x60) : c; }).join("");
+    }
+    function kanaGlyph(h) { return ui.kanaScript === "kata" ? toKatakana(h) : h; }
+    function speakKana(h) { speakTTS(h, "ja-JP"); }
+    function shuffleArr(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+
+    function kanaGridCells(rows) {
+      return rows.flat().map(c => c
+        ? `<button class="kana-cell" data-h="${esc(c[1])}"><span class="kc ja">${esc(kanaGlyph(c[1]))}</span><span class="kr">${esc(c[0])}</span></button>`
+        : `<span class="kana-cell empty"></span>`).join("");
+    }
+    function renderKanaChart() {
+      $("#kanaBody").innerHTML =
+        `<div class="kana-section"><h3>청음 (清音)</h3><div class="kana-grid">${kanaGridCells(KANA.seion)}</div></div>
+         <div class="kana-section"><h3>탁음·반탁음 (濁音·半濁音)</h3><div class="kana-grid">${kanaGridCells(KANA.dakuten)}</div></div>
+         <div class="kana-section"><h3>요음 (拗音)</h3><div class="kana-grid yoon">${kanaGridCells(KANA.yoon)}</div></div>
+         <p class="kana-hint">글자를 누르면 발음이 나옵니다 🔊</p>`;
+      $$("#kanaBody .kana-cell[data-h]").forEach(b => b.addEventListener("click", () => speakKana(b.dataset.h)));
+    }
+
+    let quiz = null;
+    function kanaQuizPool() {
+      const seen = new Set(), items = [];
+      [KANA.seion, KANA.dakuten, KANA.yoon].forEach(g => g.flat().forEach(c => {
+        if (c && !seen.has(c[0])) { seen.add(c[0]); items.push({ romaji: c[0], h: c[1] }); }
+      }));
+      return items;
+    }
+    function renderKanaQuiz() {
+      if (!quiz) quiz = { dir: "k2r", score: 0, total: 0 };
+      quiz.pool = kanaQuizPool();
+      $("#kanaBody").innerHTML =
+        `<div class="quiz-top">
+           <div class="seg" id="quizDir">
+             <button data-dir="k2r" class="${quiz.dir === "k2r" ? "active" : ""}">글자 → 읽기</button>
+             <button data-dir="r2k" class="${quiz.dir === "r2k" ? "active" : ""}">읽기 → 글자</button>
+           </div>
+           <div class="quiz-score">점수 <b id="qScore">${quiz.score} / ${quiz.total}</b></div>
+         </div>
+         <div id="quizArea"></div>`;
+      $$("#quizDir button").forEach(b => b.addEventListener("click", () => {
+        $$("#quizDir button").forEach(x => x.classList.remove("active")); b.classList.add("active");
+        quiz.dir = b.dataset.dir; nextKanaQuestion();
+      }));
+      nextKanaQuestion();
+    }
+    function nextKanaQuestion() {
+      const pool = quiz.pool;
+      const ans = pool[Math.floor(Math.random() * pool.length)];
+      const opts = [ans];
+      let guard = 0;
+      while (opts.length < 4 && guard++ < 200) {
+        const c = pool[Math.floor(Math.random() * pool.length)];
+        if (!opts.some(o => o.romaji === c.romaji)) opts.push(c);
+      }
+      shuffleArr(opts);
+      const dir = quiz.dir;
+      const promptHTML = dir === "k2r"
+        ? `<div class="quiz-glyph ja">${esc(kanaGlyph(ans.h))}</div>`
+        : `<div class="quiz-glyph romaji">${esc(ans.romaji)}</div>`;
+      const optHTML = opts.map(o =>
+        `<button class="quiz-opt ${dir === "r2k" ? "ja" : ""}" data-r="${esc(o.romaji)}">${esc(dir === "k2r" ? o.romaji : kanaGlyph(o.h))}</button>`).join("");
+      $("#quizArea").innerHTML = `<button class="spk quiz-spk" id="qSpk" title="발음 듣기">🔊</button>${promptHTML}<div class="quiz-opts">${optHTML}</div>`;
+      $("#qSpk").addEventListener("click", () => speakKana(ans.h));
+      $$("#quizArea .quiz-opt").forEach(b => b.addEventListener("click", () => answerKana(b, ans)));
+    }
+    function answerKana(btn, ans) {
+      quiz.total++;
+      const correct = btn.dataset.r === ans.romaji;
+      if (correct) quiz.score++;
+      $$("#quizArea .quiz-opt").forEach(b => {
+        b.disabled = true;
+        if (b.dataset.r === ans.romaji) b.classList.add("correct");
+        else if (b === btn) b.classList.add("wrong");
+      });
+      $("#qScore").textContent = `${quiz.score} / ${quiz.total}`;
+      speakKana(ans.h);
+      setTimeout(nextKanaQuestion, correct ? 750 : 1400);
+    }
+    function renderKana() {
+      if (ui.kanaMode === "chart") renderKanaChart();
+      else renderKanaQuiz();
+    }
+    $$("#kanaScript button").forEach(b => b.addEventListener("click", () => {
+      $$("#kanaScript button").forEach(x => x.classList.remove("active")); b.classList.add("active");
+      ui.kanaScript = b.dataset.script; renderKana();
+    }));
+    $$("#kanaMode button").forEach(b => b.addEventListener("click", () => {
+      $$("#kanaMode button").forEach(x => x.classList.remove("active")); b.classList.add("active");
+      ui.kanaMode = b.dataset.mode; renderKana();
+    }));
 
     /* ============================ 렌더 오케스트레이션 ============================ */
     function renderManage() { syncDeckSelects(); renderDeckManage(); renderWordList(); }

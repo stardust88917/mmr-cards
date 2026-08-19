@@ -7,6 +7,8 @@ UI는 [gen-sports26](https://github.com/stardust88917/gen-sports26)의 디자인
 
 - 🔎 **실시간 사전 검색** — 한국어 단어 검색 → 일본어 번역어·뜻풀이·예문 자동 입력
 - 🔄 **카드 플립 학습** — 한→일 / 일→한 출제 방향 전환, 섞기, 진도 표시
+- 🔊 **발음 듣기** — 한국어는 국립국어원 실제 녹음(`/api/audio`), 일본어 뜻은 브라우저 음성합성(TTS)
+- 🈂️ **가나 학습** — 히라가나·가타카나 오십음도 표 + 발음 듣기 + 읽기 퀴즈 (API 불필요, 앱 내장)
 - ✅ **암기 체크** — 외움/모름 상태 저장, 상태별 필터
 - 📚 **단어장(덱) 분류**, ✍️ 직접 추가·수정, 📤 JSON 내보내기/가져오기
 - 🌙 **라이트/다크 테마** 토글
@@ -19,7 +21,9 @@ mmr-cards/
 ├─ index.html        프론트엔드 (단일 파일: HTML+CSS+JS)
 ├─ api/
 │  ├─ search.js      krdict 검색 API 프록시 (키 숨김 + CORS 우회)
-│  └─ view.js        krdict 상세 API 프록시 (예문 조회)
+│  ├─ view.js        krdict 상세 API 프록시 (예문 + 발음 file_no)
+│  └─ audio.js       krdict 발음 음성 프록시
+├─ dev.mjs           로컬 개발 서버 (Vercel 없이 실행)
 ├─ package.json
 ├─ .env.example      → .env.local 로 복사해 인증키 입력
 └─ vercel.json
