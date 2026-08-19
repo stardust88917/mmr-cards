@@ -36,12 +36,17 @@ mmr-cards/
 KRDICT_KEY=발급받은_32자리_인증키
 ```
 
-### 방법 A — Vercel 없이 (가장 간단, 권장)
-Node만 있으면 됩니다. 별도 설치·로그인 불필요:
+### 실행 방법 (Vercel 불필요)
+터미널(PowerShell)에서 이 폴더로 이동한 뒤 서버를 켭니다:
 ```bash
+cd C:\Users\SKTelecom\Desktop\CLAUDE-COWORK\PROJECTS\mmr-cards
 npm run local
 ```
-→ http://localhost:3000 접속 (`dev.mjs`가 프록시 함수 + 정적 파일을 함께 서빙)
+→ 터미널에 "서버 실행 중"이 뜨면, 브라우저에서 **http://localhost:3000** 접속.
+(`dev.mjs`가 프록시 함수 + 정적 파일을 함께 서빙)
+
+> ⚠️ http://localhost:3000 은 **서버가 켜져 있을 때만** 열립니다. 서버 없이 주소만
+> 입력하면 "연결할 수 없음"이 뜹니다. 그 터미널 창은 쓰는 동안 닫지 마세요.
 
 ### 방법 B — Vercel CLI 로
 ```bash

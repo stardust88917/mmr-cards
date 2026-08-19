@@ -4,4 +4,5 @@ node_modules/
 .env.local
 .env*.local
 *.log
+*.bat
 .DS_Store
