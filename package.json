@@ -1,0 +1,12 @@
+{
+  "name": "jp-ko-vocab",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "일본어-한국어 단어장 — 국립국어원 한국어기초사전 Open API 기반 플래시카드",
+  "scripts": {
+    "local": "node dev.mjs",
+    "dev": "vercel dev",
+    "deploy": "vercel --prod"
+  }
+}
