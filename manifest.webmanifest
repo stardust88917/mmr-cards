@@ -1,0 +1,17 @@
+{
+  "name": "단어장 · 単語帳",
+  "short_name": "単語帳",
+  "description": "한국어-일본어 플래시카드 단어장 (国立国語院 辞書)",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#F1ECE3",
+  "theme_color": "#F1ECE3",
+  "lang": "ko",
+  "categories": ["education"],
+  "icons": [
+    { "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "maskable" }
+  ]
+}

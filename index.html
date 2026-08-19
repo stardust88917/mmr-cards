@@ -2,8 +2,14 @@
 <html lang="ko" data-theme="light">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
-  <meta name="theme-color" content="#f0f2f5" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, viewport-fit=cover" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <link rel="manifest" href="/manifest.webmanifest" />
+  <link rel="icon" type="image/svg+xml" href="/icon.svg" />
+  <link rel="apple-touch-icon" href="/icon.svg" />
+  <meta name="theme-color" content="#F1ECE3" />
   <meta name="google" content="notranslate" />
   <title>일본어 단어장 · 日本語単語帳</title>
   <link rel="preconnect" href="https://cdn.jsdelivr.net" />
@@ -74,7 +80,7 @@
       --scrollbar-thumb: rgba(255,255,255,0.25);
     }
 
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
     html, body { height: 100%; }
     body {
       font-family: 'Pretendard', 'Apple SD Gothic Neo', 'Malgun Gothic',
@@ -84,9 +90,13 @@
       background-attachment: fixed;
       color: var(--text);
       -webkit-font-smoothing: antialiased;
+      -webkit-text-size-adjust: 100%;
       line-height: 1.5;
+      overscroll-behavior-y: contain;
       transition: background .3s ease, color .3s ease;
     }
+    button, a, .tab, .chip, .seg button, input, select, textarea { touch-action: manipulation; }
+    button:active, .tab:active, .chip:active, .mini-btn:active, .seg button:active, .lang-choice:active, .kana-cell:active, .quiz-opt:active { transform: scale(0.97); }
     .ja { /* 일본어 텍스트 — 가독성을 위해 자간 살짝 */
       font-family: 'Yu Gothic', 'Meiryo', 'Hiragino Sans', 'Noto Sans JP',
                    'Pretendard', sans-serif;
@@ -100,9 +110,9 @@
 
     /* ============================ 네비게이션 ============================ */
     nav {
-      height: 58px; position: sticky; top: 0; z-index: 100;
+      height: calc(58px + env(safe-area-inset-top, 0px)); position: sticky; top: 0; z-index: 100;
       display: flex; align-items: center; gap: 16px;
-      padding: 0 20px;
+      padding: env(safe-area-inset-top, 0px) max(20px, env(safe-area-inset-left)) 0 max(20px, env(safe-area-inset-left));
       background: var(--surface);
       backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
       box-shadow: var(--shadow-nav);
@@ -135,7 +145,7 @@
     .api-dot.off { background: var(--danger); }
 
     /* ============================ 페이지 레이아웃 ============================ */
-    .page { display: none; min-height: calc(100vh - 58px); padding: 28px 16px 96px; }
+    .page { display: none; min-height: calc(100vh - 58px); padding: 24px 16px calc(72px + env(safe-area-inset-bottom, 0px)); }
     .page.active { display: block; }
     .wrap { max-width: 680px; margin: 0 auto; }
     .wrap-wide { max-width: 820px; margin: 0 auto; }
@@ -195,6 +205,10 @@
       border-radius: var(--radius-lg);
     }
     .card-inner.flipped { transform: rotateY(180deg); }
+    .card-inner { touch-action: pan-y; }
+    .card-scene.swipe-known .card-face { box-shadow: 0 0 0 3px var(--success), var(--shadow-card); }
+    .card-scene.swipe-unknown .card-face { box-shadow: 0 0 0 3px var(--danger), var(--shadow-card); }
+    .swipe-tip { display: none; text-align: center; font-size: 12px; color: var(--text-light); margin-top: 10px; }
     .card-inner:hover { box-shadow: var(--shadow-card-hover); }
     .card-face {
       position: absolute; inset: 0; backface-visibility: hidden; -webkit-backface-visibility: hidden;
@@ -409,14 +423,29 @@
 
     /* ============================ 반응형 ============================ */
     @media (max-width: 560px) {
-      nav { gap: 8px; padding: 0 12px; }
+      nav { gap: 6px; padding: env(safe-area-inset-top, 0px) 12px 0; }
       .logo .sub { display: none; }
-      .tab { padding: 8px 10px; }
-      .card-scene { height: 360px; }
+      .tabs { gap: 2px; }
+      .tab { padding: 10px 11px; font-size: 14.5px; }
+      .icon-btn { width: 40px; height: 40px; }
+      .chip { padding: 9px 15px; font-size: 13.5px; }
+      .seg button { padding: 9px 13px; }
+      .mini-btn { padding: 10px 14px; }
+      .btn { padding: 13px 18px; min-height: 48px; }
+      input[type="text"], textarea, select { font-size: 16px; }
+      .card-scene { height: clamp(300px, 56vh, 470px); }
       .card-face { padding: 26px 22px; }
-      .word-main { font-size: 32px; } .word-main.ja { font-size: 28px; }
-      .ans-word { font-size: 23px; } .ans-word.ko { font-size: 27px; }
+      .word-main { font-size: 34px; } .word-main.ja { font-size: 30px; }
+      .ans-word { font-size: 24px; } .ans-word.ko { font-size: 28px; }
       .row-2 { grid-template-columns: 1fr; }
+      .spk { width: 50px; height: 50px; font-size: 22px; }
+      .wrap, .wrap-wide { max-width: 100%; }
+      .card-controls { gap: 8px; } .card-controls .btn { flex: 1; padding: 13px 8px; }
+      .mark-row { gap: 8px; } .mark-row .btn { flex: 1; }
+      .hint { display: none; }
+      .swipe-tip { display: block; }
+      .kana-cell { min-height: 56px; }
+      .quiz-opt { padding: 16px; }
     }
   </style>
 </head>
@@ -772,7 +801,7 @@
     function applyTheme(theme) {
       document.documentElement.setAttribute("data-theme", theme);
       $("#themeBtn").innerHTML = ic(theme === "dark" ? "sun" : "moon");
-      $('meta[name="theme-color"]').setAttribute("content", theme === "dark" ? "#0f172a" : "#f0f2f5");
+      $('meta[name="theme-color"]').setAttribute("content", theme === "dark" ? "#16140F" : "#F1ECE3");
       localStorage.setItem(THEME_KEY, theme);
     }
     $("#themeBtn").addEventListener("click", () => {
@@ -1001,9 +1030,10 @@
           <button class="btn btn-unknown" id="markUnknown">${ic('x')} ${esc(t('btnAgain'))}</button>
           <button class="btn btn-known" id="markKnown">${ic('check')} ${esc(t('btnKnown'))}</button>
         </div>
-        <div class="hint"><kbd>Space</kbd> ${esc(t('hintFlip'))} · <kbd>←</kbd> <kbd>→</kbd> ${esc(t('hintMove'))} · <kbd>1</kbd> ${esc(t('hintAgain'))} · <kbd>2</kbd> ${esc(t('hintKnown'))}</div>`;
+        <div class="hint"><kbd>Space</kbd> ${esc(t('hintFlip'))} · <kbd>←</kbd> <kbd>→</kbd> ${esc(t('hintMove'))} · <kbd>1</kbd> ${esc(t('hintAgain'))} · <kbd>2</kbd> ${esc(t('hintKnown'))}</div>
+        <div class="swipe-tip">← ${esc(t('hintAgain'))} · ${esc(t('hintFlip'))} · ${esc(t('hintKnown'))} →</div>`;
 
-      $("#cardInner").addEventListener("click", flip);
+      setupCardSwipe($("#cardInner"), $(".card-scene"));
       $("#flipBtn").addEventListener("click", flip);
       $("#prevBtn").addEventListener("click", prev);
       $("#nextBtn").addEventListener("click", next);
@@ -1038,6 +1068,49 @@
         toast(t('tUnknownMark'));
         advance();
       }
+    }
+    // 스와이프 처리(도장 애니메이션 없이 바로) — 스와이프 자체가 피드백
+    function markSwipe(status) {
+      const w = ui.queue[ui.qi]; if (!w) return;
+      const real = db.words.find(x => x.id === w.id); if (real) { real.status = status; save(); }
+      w.status = status;
+      toast(status === "known" ? t('tKnownMark') : t('tUnknownMark'));
+      if (ui.qi < ui.queue.length - 1) next(); else renderStudy();
+    }
+    function setupCardSwipe(inner, scene) {
+      let sx = 0, sy = 0, dx = 0, dragging = false, down = false;
+      const clear = () => { scene.classList.remove("swipe-known", "swipe-unknown"); };
+      const snapBack = () => { inner.style.transition = "transform .2s ease"; inner.style.transform = ""; clear(); };
+      inner.addEventListener("pointerdown", (e) => {
+        down = true; dragging = false; sx = e.clientX; sy = e.clientY; dx = 0;
+        inner.style.transition = "none";
+        try { inner.setPointerCapture(e.pointerId); } catch (x) {}
+      });
+      inner.addEventListener("pointermove", (e) => {
+        if (!down) return;
+        dx = e.clientX - sx; const dy = e.clientY - sy;
+        if (!dragging && Math.abs(dx) > 8 && Math.abs(dx) > Math.abs(dy)) dragging = true;
+        if (dragging) {
+          e.preventDefault();
+          inner.style.transform = `translateX(${dx}px) rotate(${dx / 24}deg)` + (ui.flipped ? " rotateY(180deg)" : "");
+          scene.classList.toggle("swipe-known", dx > 45);
+          scene.classList.toggle("swipe-unknown", dx < -45);
+        }
+      });
+      const end = () => {
+        if (!down) return; down = false;
+        if (dragging) {
+          if (Math.abs(dx) > 90) {
+            const dir = dx > 0 ? 1 : -1;
+            inner.style.transition = "transform .26s ease";
+            inner.style.transform = `translateX(${dir * (window.innerWidth || 400)}px) rotate(${dir * 16}deg)` + (ui.flipped ? " rotateY(180deg)" : "");
+            clear();
+            setTimeout(() => markSwipe(dir > 0 ? "known" : "unknown"), 170);
+          } else { snapBack(); }
+        } else { snapBack(); flip(); }   // 움직임 거의 없으면 탭 → 뒤집기
+      };
+      inner.addEventListener("pointerup", end);
+      inner.addEventListener("pointercancel", () => { down = false; snapBack(); });
     }
 
     // 방향 / 상태 세그먼트
@@ -1438,6 +1511,11 @@
       $("#langPicker").style.display = "flex";           // 첫 실행: 언어 선택
     } else if (!localStorage.getItem(TUT_KEY)) {
       openTutorial();                                    // 언어는 있고 튜토리얼 미확인
+    }
+
+    // PWA 서비스 워커 등록 (오프라인 + 설치)
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", () => { navigator.serviceWorker.register("/sw.js").catch(() => {}); });
     }
   })();
   </script>
