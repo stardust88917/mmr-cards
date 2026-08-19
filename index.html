@@ -318,6 +318,24 @@
     .tut-dot.active { background: var(--primary); width: 22px; border-radius: 4px; }
     .tutorial-nav { display: flex; gap: 10px; }
     .tutorial-nav .btn { flex: 1; justify-content: center; }
+    /* 튜토리얼 시각 데모 (단어 추가 흐름) */
+    .tut-demo { display: flex; flex-direction: column; align-items: center; gap: 6px; margin-top: 4px; }
+    .tut-demo-search { display: flex; align-items: center; gap: 8px; width: 100%; padding: 9px 12px;
+      border: 1.5px solid var(--border); border-radius: 10px; background: var(--surface-2); font-size: 14px; color: var(--text); }
+    .tut-demo-search .kw { flex: 1; text-align: left; font-weight: 700; }
+    .tut-demo-btn { background: var(--btn-grad); color: #fff; font-size: 12px; font-weight: 700; padding: 5px 12px; border-radius: 8px; }
+    .tut-demo-arrow { color: var(--text-light); font-size: 15px; line-height: 1; }
+    .tut-demo-result { display: flex; align-items: center; justify-content: space-between; gap: 10px; width: 100%;
+      padding: 11px 13px; border: 1.5px solid var(--primary); border-radius: 12px; background: var(--surface);
+      box-shadow: 0 0 0 3px var(--tag-bg); }
+    .tut-demo-result .info { text-align: left; }
+    .tut-demo-result .kw { font-size: 15px; font-weight: 700; }
+    .tut-demo-result .kp { font-size: 12px; color: var(--text-light); margin-left: 4px; }
+    .tut-demo-result .jp { font-size: 13px; font-weight: 600; color: var(--tag-text); margin-top: 2px; }
+    .tut-demo-add { flex: none; background: var(--btn-grad); color: #fff; font-size: 13px; font-weight: 700;
+      padding: 8px 14px; border-radius: 10px; white-space: nowrap; box-shadow: 0 3px 12px rgba(99,102,241,0.4); }
+    .tut-demo-add.pulse { animation: tutPulse 1.3s ease-in-out infinite; }
+    @keyframes tutPulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.07); } }
 
     /* ============================ 가나 학습 ============================ */
     .kana-controls { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; margin-bottom: 22px; }
@@ -1134,14 +1152,22 @@
     const TUT_KEY = "jpko_tutorial_seen";
     const TUTORIAL = [
       { icon: "📕", title: "일본어 단어장에 오신 걸 환영해요", desc: "국립국어원 사전으로 <b>한국어–일본어 단어</b>를 만들고, 카드로 외우고, <b>히라가나·가타카나</b>까지 연습할 수 있어요." },
-      { icon: "🔎", title: "① 단어 추가하기", desc: "<b>‘단어 관리’</b> 탭에서 한국어 단어를 검색하면 일본어 뜻·발음·예문이 자동으로 채워집니다. <b>‘＋추가’</b>만 누르세요." },
+      { icon: "🔎", title: "① 단어 추가하기", desc: "<b>‘단어 관리’</b>에서 한국어를 검색하면 일본어 뜻·발음·예문이 <b>자동 완성</b>! <b>＋추가</b>만 누르면 끝이에요.",
+        visual: `<div class="tut-demo">
+            <div class="tut-demo-search"><span>🔎</span><span class="kw">바다</span><span class="tut-demo-btn">검색</span></div>
+            <div class="tut-demo-arrow">↓</div>
+            <div class="tut-demo-result">
+              <div class="info"><span class="kw">바다</span><span class="kp">[바다]</span><div class="jp ja">うみ【海】</div></div>
+              <span class="tut-demo-add pulse">＋ 추가</span>
+            </div>
+          </div>` },
       { icon: "🔄", title: "② 카드로 학습하기", desc: "<b>‘학습’</b> 탭에서 카드를 눌러 뒤집고, <b>🔊</b>로 발음을 듣고, 외운/모르는 단어를 표시하세요. 한→일·일→한 방향도 바꿀 수 있어요." },
       { icon: "🈂️", title: "③ 가나 익히기", desc: "<b>‘가나’</b> 탭에서 오십음도 표로 발음을 듣거나, <b>퀴즈</b>로 히라가나·가타카나를 연습하세요." },
     ];
     let tutStep = 0;
     function renderTutorial() {
       const s = TUTORIAL[tutStep];
-      $("#tutBody").innerHTML = `<div class="tut-icon">${s.icon}</div><h2 class="tut-title">${esc(s.title)}</h2><p class="tut-desc">${s.desc}</p>`;
+      $("#tutBody").innerHTML = `<div class="tut-icon">${s.icon}</div><h2 class="tut-title">${esc(s.title)}</h2><p class="tut-desc">${s.desc}</p>${s.visual || ""}`;
       $("#tutDots").innerHTML = TUTORIAL.map((_, i) => `<span class="tut-dot ${i === tutStep ? "active" : ""}"></span>`).join("");
       $("#tutPrev").style.visibility = tutStep === 0 ? "hidden" : "visible";
       $("#tutNext").textContent = tutStep === TUTORIAL.length - 1 ? "시작하기 🚀" : "다음";
