@@ -15,7 +15,7 @@ UI는 [gen-sports26](https://github.com/stardust88917/gen-sports26)의 디자인
 ## 구조
 
 ```
-jp-ko-vocab/
+mmr-cards/
 ├─ index.html        프론트엔드 (단일 파일: HTML+CSS+JS)
 ├─ api/
 │  ├─ search.js      krdict 검색 API 프록시 (키 숨김 + CORS 우회)
