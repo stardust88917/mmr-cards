@@ -168,7 +168,26 @@
     .progress-txt { font-size: 13px; color: var(--text-light); text-align: center; }
 
     /* 카드 플립 */
-    .card-scene { width: 100%; max-width: 640px; height: 400px; margin: 18px auto 0; perspective: 1200px; }
+    .card-scene { width: 100%; max-width: 640px; height: 400px; margin: 18px auto 0; perspective: 1200px; position: relative; }
+    /* 인장(印) 도장 */
+    .seal { position: absolute; z-index: 6; pointer-events: none; border-radius: 50%;
+      border: 3.5px solid var(--primary); color: var(--primary);
+      font-family: var(--serif); font-weight: 700; line-height: 1; display: grid; place-items: center; }
+    .seal-stamp { top: 46%; left: 50%; width: 104px; height: 104px; font-size: 54px; opacity: 0;
+      transform: translate(-50%,-50%) rotate(-12deg) scale(2.2); }
+    .seal-stamp.go { animation: sealStamp .5s cubic-bezier(.2,1.5,.4,1) forwards; }
+    @keyframes sealStamp {
+      0%   { opacity: 0;   transform: translate(-50%,-50%) rotate(-12deg) scale(2.2); }
+      55%  { opacity: .95; transform: translate(-50%,-50%) rotate(-12deg) scale(.88); }
+      72%  { opacity: .95; transform: translate(-50%,-50%) rotate(-12deg) scale(1.06); }
+      100% { opacity: .92; transform: translate(-50%,-50%) rotate(-12deg) scale(1); }
+    }
+    .seal-mini { right: 22px; bottom: 20px; width: 50px; height: 50px; font-size: 25px;
+      border-width: 2.5px; opacity: .82; transform: rotate(-12deg); transition: opacity .25s ease; }
+    .card-inner.flipped ~ .seal-mini { opacity: 0; }
+    @media (prefers-reduced-motion: reduce) {
+      .seal-stamp.go { animation: none; opacity: .92; transform: translate(-50%,-50%) rotate(-12deg) scale(1); }
+    }
     .card-inner {
       position: relative; width: 100%; height: 100%; cursor: pointer; user-select: none;
       transform-style: preserve-3d; transition: transform .55s cubic-bezier(.4,0,.2,1);
@@ -822,6 +841,7 @@
             <div class="card-face card-front">${front}</div>
             <div class="card-face card-back">${back}</div>
           </div>
+          ${w.status === "known" ? `<div class="seal seal-mini">済</div>` : ""}
         </div>
         <div class="card-controls">
           <button class="btn btn-ghost" id="prevBtn">← 이전</button>
@@ -848,12 +868,27 @@
     function flip() { ui.flipped = !ui.flipped; const c = $("#cardInner"); if (c) c.classList.toggle("flipped", ui.flipped); }
     function next() { if (ui.qi < ui.queue.length - 1) { ui.qi++; ui.flipped = false; renderStudy(); } else { toast("마지막 단어입니다"); } }
     function prev() { if (ui.qi > 0) { ui.qi--; ui.flipped = false; renderStudy(); } }
+    function stampSeal() {
+      const scene = $(".card-scene"); if (!scene) return;
+      const s = document.createElement("div");
+      s.className = "seal seal-stamp";
+      s.textContent = "済";
+      scene.appendChild(s);
+      requestAnimationFrame(() => s.classList.add("go"));
+    }
     function mark(status) {
       const w = ui.queue[ui.qi]; if (!w) return;
       const real = db.words.find(x => x.id === w.id); if (real) { real.status = status; save(); }
       w.status = status;
-      toast(status === "known" ? "외운 단어로 표시했어요" : "다시 볼 단어로 표시했어요");
-      if (ui.qi < ui.queue.length - 1) next(); else renderStudy();
+      const advance = () => { if (ui.qi < ui.queue.length - 1) next(); else renderStudy(); };
+      if (status === "known") {
+        stampSeal();
+        toast("외운 단어로 표시했어요");
+        setTimeout(advance, 680);       // 도장이 찍히는 걸 보여준 뒤 다음 카드로
+      } else {
+        toast("다시 볼 단어로 표시했어요");
+        advance();
+      }
     }
 
     // 방향 / 상태 세그먼트
