@@ -1039,10 +1039,12 @@
       $("#nextBtn").addEventListener("click", next);
       $("#markKnown").addEventListener("click", () => mark("known"));
       $("#markUnknown").addEventListener("click", () => mark("unknown"));
-      // 스피커: 카드 뒤집힘 방지(stopPropagation) 후 해당 면의 언어로 발음
+      // 스피커: 포인터 이벤트가 카드(스와이프/뒤집기)로 전파되지 않게 막고 소리만 재생
       const spkF = $("#spkFront"), spkB = $("#spkBack");
-      if (spkF) spkF.addEventListener("click", (e) => { e.stopPropagation(); dir === "ko-ja" ? speakKorean(w) : speakJapanese(w); });
-      if (spkB) spkB.addEventListener("click", (e) => { e.stopPropagation(); dir === "ko-ja" ? speakJapanese(w) : speakKorean(w); });
+      const stopBubble = (el) => { if (el) ["pointerdown", "pointerup", "pointermove", "click"].forEach(ev => el.addEventListener(ev, e => e.stopPropagation())); };
+      stopBubble(spkF); stopBubble(spkB);
+      if (spkF) spkF.addEventListener("click", () => { dir === "ko-ja" ? speakKorean(w) : speakJapanese(w); });
+      if (spkB) spkB.addEventListener("click", () => { dir === "ko-ja" ? speakJapanese(w) : speakKorean(w); });
     }
     function flip() { ui.flipped = !ui.flipped; const c = $("#cardInner"); if (c) c.classList.toggle("flipped", ui.flipped); }
     function next() { if (ui.qi < ui.queue.length - 1) { ui.qi++; ui.flipped = false; renderStudy(); } else { toast(t('tLastCard')); } }
