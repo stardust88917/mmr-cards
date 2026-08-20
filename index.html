@@ -117,7 +117,7 @@
 
     /* ============================ 네비게이션 ============================ */
     nav {
-      height: calc(58px + env(safe-area-inset-top, 0px)); position: sticky; top: 0; z-index: 100;
+      height: calc(64px + env(safe-area-inset-top, 0px)); position: sticky; top: 0; z-index: 100;
       display: flex; align-items: center; gap: 16px;
       padding: env(safe-area-inset-top, 0px) max(20px, env(safe-area-inset-left)) 0 max(20px, env(safe-area-inset-left));
       background: var(--surface);
@@ -152,7 +152,7 @@
     .api-dot.off { background: var(--danger); }
 
     /* ============================ 페이지 레이아웃 ============================ */
-    .page { display: none; padding: 32px 16px 20px; }
+    .page { display: none; padding: 14px 16px 20px; }
     .page.active { display: block; flex: 1 0 auto; }
     .wrap { max-width: 680px; margin: 0 auto; }
     .wrap-wide { max-width: 820px; margin: 0 auto; }
@@ -228,6 +228,8 @@
       transition: color .15s ease, border-color .15s ease, transform .1s ease; box-shadow: 0 2px 8px rgba(40,28,18,0.07); }
     .card-nav-btn:hover { color: var(--primary); border-color: var(--primary); }
     .card-nav-btn:active { transform: scale(0.9); }
+    .card-count { position: absolute; left: 18px; bottom: 15px; z-index: 5; font-size: 12.5px; font-weight: 600;
+      color: var(--text-light); font-variant-numeric: tabular-nums; letter-spacing: .03em; }
     .card-inner:hover { box-shadow: var(--shadow-card-hover); }
     .card-face {
       position: absolute; inset: 0; backface-visibility: hidden; -webkit-backface-visibility: hidden;
@@ -502,8 +504,6 @@
             <button data-st="known" data-i18n="stKnown">외움</button>
           </div>
         </div>
-        <div class="progress"><i id="progFill"></i></div>
-        <div id="progTxt" class="progress-txt"></div>
       </div>
 
       <div id="studyArea"></div>
@@ -984,15 +984,8 @@
         `<option value="${esc(c.k)}"${ui.deckFilter === c.k ? " selected" : ""}>${esc(trunc(c.label))}</option>`).join("");
       sel.value = ui.deckFilter;
     }
-    function updateProgress() {
-      const total = ui.queue.length;
-      const cur = total ? ui.qi + 1 : 0;
-      $("#progFill").style.width = total ? (cur / total * 100) + "%" : "0%";
-      $("#progTxt").textContent = total ? `${cur} / ${total}` : "";
-    }
     function renderStudy() {
       const area = $("#studyArea");
-      updateProgress();
       if (!ui.queue.length) {
         area.innerHTML = `<div class="empty"><div class="big">${ic('inbox', 'ic-xl')}</div>
           <h3>${esc(t('emptyTitle'))}</h3>
@@ -1049,6 +1042,7 @@
             <button class="card-nav-btn" id="prevBtn" aria-label="${esc(t('btnPrev'))}">‹</button>
             <button class="card-nav-btn" id="nextBtn" aria-label="${esc(t('btnNext'))}">›</button>
           </div>
+          <div class="card-count">${ui.qi + 1} / ${ui.queue.length}</div>
           ${w.status === "known" ? `<div class="seal seal-mini">済</div>` : ""}
         </div>
         <div class="mark-row">
