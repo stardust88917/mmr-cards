@@ -758,6 +758,11 @@
     };
 
     let db = load();
+    (function migrate() {   // 구버전 시드 보정: 독음 없던 '공부하다'
+      let changed = false;
+      db.words.forEach(w => { if (w.word === "공부하다" && w.meaning === "勉強する") { w.meaning = "べんきょうする【勉強する】"; changed = true; } });
+      if (changed) save();
+    })();
     let ui = {
       deckFilter: "__all__",   // 학습 덱 필터
       direction: "ko-ja",       // ko-ja | ja-ko
