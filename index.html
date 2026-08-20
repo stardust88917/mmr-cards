@@ -153,6 +153,9 @@
     /* ============================ 학습 페이지 ============================ */
     .study-top { display: flex; flex-direction: column; gap: 14px; margin-bottom: 20px; }
     .chips { display: flex; gap: 8px; flex-wrap: wrap; }
+    .deck-row { display: flex; gap: 10px; align-items: center; }
+    .deck-select { flex: 1; min-width: 0; max-width: 300px; font-weight: 600; font-size: 14px; cursor: pointer; }
+    .shuffle-btn { flex: none; }
     .chip {
       font-size: 13px; font-weight: 600; padding: 7px 14px; border-radius: 999px;
       border: 1.5px solid var(--border); background: var(--surface);
@@ -469,7 +472,10 @@
   <section id="page-study" class="page active">
     <div class="wrap">
       <div class="study-top">
-        <div id="deckChips" class="chips"></div>
+        <div class="deck-row">
+          <select id="deckSelect" class="deck-select" aria-label="단어장 선택"></select>
+          <button id="shuffleBtn" class="icon-btn shuffle-btn" data-i18n-title="btnShuffle" title="섞기" aria-label="섞기"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 4l3 3-3 3"/><path d="M18 14l3 3-3 3"/><path d="M3 7h3.5c1.5 0 2.5.6 3.5 2"/><path d="M21 7h-4.5c-2.5 0-4 3-6 6.5S7.5 17 5 17H3"/><path d="M21 17h-3"/></svg></button>
+        </div>
         <div class="toolbar">
           <div class="seg" id="dirSeg" data-i18n-title="titleDir" title="출제 방향">
             <button data-dir="ko-ja" class="active" data-i18n="dirKoJa">한 → 일</button>
@@ -480,7 +486,6 @@
             <button data-st="todo" data-i18n="stTodo">모름</button>
             <button data-st="known" data-i18n="stKnown">외움</button>
           </div>
-          <button id="shuffleBtn" class="mini-btn"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 4l3 3-3 3"/><path d="M18 14l3 3-3 3"/><path d="M3 7h3.5c1.5 0 2.5.6 3.5 2"/><path d="M21 7h-4.5c-2.5 0-4 3-6 6.5S7.5 17 5 17H3"/><path d="M21 17h-3"/></svg><span data-i18n="btnShuffle">섞기</span></button>
         </div>
         <div class="progress"><i id="progFill"></i></div>
         <div id="progTxt" class="progress-txt"></div>
@@ -947,16 +952,17 @@
         for (let i = ui.queue.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [ui.queue[i], ui.queue[j]] = [ui.queue[j], ui.queue[i]]; }
       }
       ui.qi = 0; ui.flipped = false;
-      renderDeckChips(); renderStudy();
+      renderDeckSelect(); renderStudy();
     }
-    function renderDeckChips() {
-      const chips = [{ k: "__all__", label: t('chipAll') }].concat(decksList().map(d => ({ k: d, label: d })));
-      $("#deckChips").innerHTML = chips.map(c =>
-        `<button class="chip ${ui.deckFilter === c.k ? "active" : ""}" data-deck="${esc(c.k)}">${esc(c.label)}</button>`
-      ).join("");
-      $$("#deckChips .chip").forEach(ch => ch.addEventListener("click", () => {
-        ui.deckFilter = ch.dataset.deck; rebuildQueue();
-      }));
+    function renderDeckSelect() {
+      const sel = $("#deckSelect"); if (!sel) return;
+      const trunc = (s) => (s.length > 14 ? s.slice(0, 14) + "…" : s);   // 긴 이름 잘라서 표시(값은 원본 유지)
+      const opts = [{ k: "__all__", label: t('chipAll') }].concat(decksList().map(d => ({ k: d, label: d })));
+      // 삭제된 덱이 선택돼 있으면 전체로 폴백
+      if (ui.deckFilter !== "__all__" && !decksList().includes(ui.deckFilter)) ui.deckFilter = "__all__";
+      sel.innerHTML = opts.map(c =>
+        `<option value="${esc(c.k)}"${ui.deckFilter === c.k ? " selected" : ""}>${esc(trunc(c.label))}</option>`).join("");
+      sel.value = ui.deckFilter;
     }
     function updateProgress() {
       const total = ui.queue.length;
@@ -1125,6 +1131,7 @@
       ui.statusFilter = b.dataset.st; rebuildQueue();
     }));
     $("#shuffleBtn").addEventListener("click", () => { rebuildQueue(true); toast(t('tShuffled')); });
+    $("#deckSelect").addEventListener("change", () => { ui.deckFilter = $("#deckSelect").value; rebuildQueue(); });
 
     // 키보드 단축키 (학습 페이지에서만)
     document.addEventListener("keydown", (e) => {
@@ -1224,7 +1231,7 @@
 
     /* ============================ 관리: 단어장(덱) ============================ */
     function syncDeckSelects() {
-      const opts = db.decks.map(d => `<option value="${esc(d)}">${esc(d)}</option>`).join("");
+      const opts = db.decks.map(d => `<option value="${esc(d)}">${esc(d.length > 14 ? d.slice(0, 14) + "…" : d)}</option>`).join("");
       $("#fDeck").innerHTML = opts; $("#targetDeck").innerHTML = opts;
     }
     function renderDeckManage() {
