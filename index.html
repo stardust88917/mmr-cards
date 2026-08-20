@@ -114,10 +114,14 @@
     .ic-xl { width: 46px; height: 46px; stroke-width: 1.5; }
     /* 明朝체 — 큰 단어·로고 (붓·먹 느낌) */
     .word-main, .ans-word, .quiz-glyph, .logo .mark { font-family: var(--serif); font-weight: 700; }
+    /* 후리가나(한자 위 히라가나 독음) */
+    ruby { ruby-position: over; }
+    ruby rt { font-size: 0.42em; font-weight: 500; opacity: .82; letter-spacing: 0; }
+    .ja-sep { opacity: .4; font-weight: 400; }
 
     /* ============================ 네비게이션 ============================ */
     nav {
-      height: calc(64px + env(safe-area-inset-top, 0px)); position: sticky; top: 0; z-index: 100;
+      height: calc(64px + env(safe-area-inset-top, 0px)); flex: none; position: sticky; top: 0; z-index: 100;
       display: flex; align-items: center; gap: 16px;
       padding: env(safe-area-inset-top, 0px) max(20px, env(safe-area-inset-left)) 0 max(20px, env(safe-area-inset-left));
       background: var(--surface);
@@ -560,11 +564,6 @@
       <div class="panel">
         <div class="list-head">
           <h2 style="margin:0;"><svg class="ic" style="color:var(--primary);margin-right:7px" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M8 13h8M8 17h8M8 9h2"/></svg><span data-i18n="mngMyWords">내 단어</span> <span class="count" id="wordCount"></span></h2>
-          <div style="display:flex; gap:8px; align-items:center;">
-            <button class="link-btn" id="exportBtn" data-i18n="btnExport">내보내기(JSON)</button>
-            <button class="link-btn" id="importBtn" data-i18n="btnImport">가져오기</button>
-            <input type="file" id="importFile" accept="application/json" style="display:none;" />
-          </div>
         </div>
         <input type="text" id="listSearch" data-i18n-ph="listSearchPh" placeholder="목록에서 검색…" style="margin-bottom:12px;" />
         <div id="wordList" class="list"></div>
@@ -748,7 +747,7 @@
           definition: "단단한 줄기에 가지와 잎이 달린, 여러 해 동안 자라는 식물.",
           example: "농부들은 한낮의 햇볕을 피해 나무 그늘 아래에서 낮잠을 청했다.", targetCode: "32750" }),
         mkWord({ deck: "기초 어휘", word: "공부하다", pron: "공부하다", pos: "동사", grade: "초급",
-          meaning: "勉強する", transDfn: "学問や技術などを学ぶ。",
+          meaning: "べんきょうする【勉強する】", transDfn: "学問や技術などを学ぶ。",
           definition: "학문이나 기술을 배우고 익히다.",
           example: "그는 밤새 시험공부를 했다.", targetCode: "" }),
         mkWord({ deck: "기초 어휘", word: "학교", pron: "학꾜", pos: "명사", grade: "초급",
@@ -816,6 +815,15 @@
     // 일본어 표시 텍스트: 직역어(meaning)가 없으면 일본어 뜻풀이(transDfn)로 대체 → 빈 카드 방지
     function jaMain(w) { return (w.meaning && w.meaning.trim()) ? w.meaning.trim() : (w.transDfn || "").trim(); }
     function jaIsDef(w) { return !(w.meaning && w.meaning.trim()) && !!(w.transDfn && w.transDfn.trim()); }
+    // "히라가나읽기【漢字】。…" → 한자 위에 후리가나(ruby)로. 【】없는 부분(가나만)은 그대로.
+    function furiganaHtml(text) {
+      if (!text) return "";
+      return text.split(/[。；;]/).map(s => s.trim()).filter(Boolean).map(seg => {
+        const m = seg.match(/^([ぁ-ゟァ-ヿー・]+)【(.+?)】(.*)$/);
+        if (m) return `<ruby>${esc(m[2])}<rt>${esc(m[1])}</rt></ruby>${esc(m[3] || "")}`;
+        return esc(seg);
+      }).join('<span class="ja-sep"> · </span>');
+    }
     let toastT;
     function toast(msg, isErr) {
       const t = $("#toast"); t.textContent = msg; t.className = "toast show" + (isErr ? " err" : "");
@@ -1007,7 +1015,7 @@
         back = `<span class="face-label">${esc(t('faceJa'))}</span>
           <div class="answer-scroll">
             ${jm
-              ? `<div class="ans-word ja${jmDef ? " ans-def-fallback" : ""}">${esc(jm)}</div>${jmDef ? `<div class="ja-note">${esc(t('noteNoDirect'))}</div>` : ""}`
+              ? `<div class="ans-word ja${jmDef ? " ans-def-fallback" : ""}">${jmDef ? esc(jm) : furiganaHtml(jm)}</div>${jmDef ? `<div class="ja-note">${esc(t('noteNoDirect'))}</div>` : ""}`
               : `<div class="ans-word" style="color:var(--card-back-text);opacity:.55;font-size:19px">${esc(t('noJa'))}</div>`}
             <button class="spk" id="spkBack" title="${esc(t('faceJa'))}">${ic('volume')}</button>
             ${(!jmDef && w.transDfn) ? `<div class="ans-block"><div class="ans-lbl">${esc(t('lblDefJp'))}</div><div class="ans-def ja">${esc(w.transDfn)}</div></div>` : ""}
@@ -1017,7 +1025,7 @@
       } else {
         front = jm
           ? `<span class="face-label">${esc(t('faceJa'))}</span>
-             <div class="word-main ja${jmDef ? " word-def-fallback" : ""}">${esc(jm)}</div>
+             <div class="word-main ja${jmDef ? " word-def-fallback" : ""}">${jmDef ? esc(jm) : furiganaHtml(jm)}</div>
              ${jmDef ? `<div class="ja-note">${esc(t('noteNoDirectShort'))}</div>` : ""}
              <button class="spk" id="spkFront" title="${esc(t('faceJa'))}">${ic('volume')}</button>`
           : `<span class="face-label">${esc(t('faceJa'))}</span>
@@ -1307,30 +1315,6 @@
     $("#listSearch").addEventListener("input", renderWordList);
 
     /* ============================ 내보내기 / 가져오기 ============================ */
-    $("#exportBtn").addEventListener("click", () => {
-      const blob = new Blob([JSON.stringify(db, null, 2)], { type: "application/json" });
-      const a = document.createElement("a");
-      a.href = URL.createObjectURL(blob);
-      a.download = `${lang === "ja" ? "単語帳" : "단어장"}_${new Date().toISOString().slice(0, 10)}.json`;
-      a.click(); URL.revokeObjectURL(a.href);
-    });
-    $("#importBtn").addEventListener("click", () => $("#importFile").click());
-    $("#importFile").addEventListener("change", (e) => {
-      const file = e.target.files[0]; if (!file) return;
-      const reader = new FileReader();
-      reader.onload = () => {
-        try {
-          const d = JSON.parse(reader.result);
-          if (!d.words || !Array.isArray(d.words)) throw new Error(t('importBadFormat'));
-          if (!confirm(t('cfImport', d.words.length))) return;
-          db = { decks: d.decks && d.decks.length ? d.decks : ["기초 어휘"], words: d.words.map(mkWord) };
-          save(); renderManage(); rebuildQueue(); toast(t('tImported'));
-        } catch (err) { toast(t('tImportFail', err.message), true); }
-      };
-      reader.readAsText(file);
-      e.target.value = "";
-    });
-
     /* ============================ 가나(오십음도) 학습 ============================ */
     const KANA = {
       seion: [
