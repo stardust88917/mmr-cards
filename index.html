@@ -174,6 +174,10 @@
     }
     .chip:hover { border-color: var(--primary); color: var(--text); }
     .chip.active { background: var(--tag-bg); color: var(--tag-text); border-color: transparent; }
+    /* 단어장 칩: 본체 = 전체 보기 진입, ✕ = 삭제 */
+    .deck-chip { font-family: inherit; }
+    .deck-chip-wrap { display: inline-flex; align-items: center; padding: 0 11px 0 0; cursor: default; }
+    .deck-chip-body { border: none; background: none; font: inherit; color: inherit; cursor: pointer; padding: 7px 2px 7px 14px; }
     .toolbar { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; justify-content: space-between; }
     .seg { display: inline-flex; background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 3px; }
     .seg button {
@@ -338,6 +342,17 @@
       transition: box-shadow .15s ease;
     }
     .item:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.07); }
+    /* 이번 세션에 추가한 단어 — 나중에 내려봐도 남는 흔적 */
+    .item.is-new {
+      border-color: var(--primary); background: var(--tag-bg);
+      box-shadow: inset 3px 0 0 var(--primary);
+      animation: itemIn .45s ease both;
+    }
+    @keyframes itemIn { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
+    .item .new-tag {
+      font-size: 10px; font-weight: 700; letter-spacing: .04em; padding: 2px 7px;
+      border-radius: 999px; background: var(--primary); color: #fff; margin-left: 6px;
+    }
     .item .info { flex: 1; min-width: 0; }
     .item .iw { font-size: 15px; font-weight: 700; }
     .item .ip { font-size: 12.5px; color: var(--text-light); font-weight: 500; margin-left: 6px; }
@@ -360,6 +375,42 @@
     .deck-bar { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
     .list-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; gap: 10px; flex-wrap: wrap; }
     .count { font-size: 13px; color: var(--text-light); font-weight: 600; }
+
+    /* 목록: 전체 보기 도구줄 */
+    .list-tools { display: flex; flex-direction: column; gap: 10px; margin-bottom: 14px; }
+    .list-tools[hidden] { display: none; }
+    .list-filter-row { display: flex; gap: 10px; }
+    .list-filter-row select { flex: 1; min-width: 0; font-weight: 600; font-size: 13.5px; cursor: pointer; }
+    .list-sub { font-size: 12px; font-weight: 700; letter-spacing: .04em; color: var(--text-light);
+      text-transform: uppercase; margin: 0 2px 10px; }
+    .back-btn {
+      display: inline-grid; place-items: center; width: 30px; height: 30px; margin-right: 8px;
+      border-radius: 8px; border: 1px solid var(--border); background: var(--surface);
+      color: var(--text-light); cursor: pointer; vertical-align: middle; transition: all .15s ease;
+    }
+    .back-btn:hover { color: var(--text); border-color: var(--border-strong); }
+
+    /* 목록: 하단 (전체 보기 버튼 / 페이저) */
+    .list-footer:empty { display: none; }
+    .list-footer { margin-top: 16px; }
+    .view-all {
+      display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%;
+      padding: 13px 16px; border-radius: var(--radius-sm); border: 1.5px dashed var(--border-strong);
+      background: transparent; color: var(--text-light); font: inherit; font-size: 13.5px; font-weight: 600;
+      cursor: pointer; transition: all .15s ease;
+    }
+    .view-all:hover { border-color: var(--primary); color: var(--primary); border-style: solid; }
+    .pager { display: flex; align-items: center; justify-content: center; gap: 6px; flex-wrap: wrap; }
+    .pager button {
+      min-width: 34px; height: 34px; padding: 0 9px; border-radius: 8px;
+      border: 1px solid var(--border); background: var(--surface); color: var(--text-light);
+      font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; transition: all .15s ease;
+    }
+    .pager button:hover:not(:disabled) { color: var(--text); border-color: var(--border-strong); }
+    .pager button.on { background: var(--primary); border-color: var(--primary); color: #fff; }
+    .pager button:disabled { opacity: .35; cursor: default; }
+    .pager .gap { color: var(--text-light); font-size: 13px; padding: 0 2px; }
+    .pager .pinfo { font-size: 12.5px; color: var(--text-light); margin-left: 4px; }
     .link-btn { background: none; border: none; color: var(--primary); font: inherit; font-weight: 600; font-size: 13px; cursor: pointer; }
     .spin { display: inline-block; width: 15px; height: 15px; border: 2px solid rgba(255,255,255,0.4); border-top-color: #fff; border-radius: 50%; animation: sp .7s linear infinite; }
     @keyframes sp { to { transform: rotate(360deg); } }
@@ -562,11 +613,16 @@
 
       <!-- 목록 -->
       <div class="panel">
-        <div class="list-head">
-          <h2 style="margin:0;"><svg class="ic" style="color:var(--primary);margin-right:7px" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M8 13h8M8 17h8M8 9h2"/></svg><span data-i18n="mngMyWords">내 단어</span> <span class="count" id="wordCount"></span></h2>
+        <div class="list-head" id="listHead"></div>
+        <div class="list-tools" id="listTools" hidden>
+          <input type="text" id="listSearch" data-i18n-ph="listSearchPh" placeholder="목록에서 검색…" />
+          <div class="list-filter-row">
+            <select id="listDeck" aria-label="단어장"></select>
+            <select id="listSort" aria-label="정렬"></select>
+          </div>
         </div>
-        <input type="text" id="listSearch" data-i18n-ph="listSearchPh" placeholder="목록에서 검색…" style="margin-bottom:12px;" />
         <div id="wordList" class="list"></div>
+        <div id="listFooter" class="list-footer"></div>
       </div>
     </div>
   </section>
@@ -655,6 +711,11 @@
         btnAdd: "추가", btnEditSave: "수정 저장", btnCancel: "취소",
         mngDecks: "단어장", btnNewDeck: "새 단어장", mngMyWords: "내 단어",
         btnExport: "내보내기(JSON)", btnImport: "가져오기", listSearchPh: "목록에서 검색…",
+        mngAllWords: "단어장 전체", listRecent: "최근 추가한 단어", listBack: "돌아가기",
+        btnViewAll: (n) => `단어장 전체 보기 (${n}개)`,
+        sortNew: "최신순", sortAz: "가나다순", tagNew: "NEW",
+        listAllEmpty: "이 단어장에 단어가 없습니다.",
+        pageInfo: (c, n) => `${c} / ${n}`,
         kanaHira: "히라가나", kanaKata: "가타카나", kanaChart: "표", kanaQuiz: "퀴즈",
         kanaSeion: "청음 (清音)", kanaDakuten: "탁음·반탁음 (濁音·半濁音)", kanaYoon: "요음 (拗音)",
         kanaHint: "글자를 누르면 발음이 나옵니다", kanaDirK2R: "글자 → 읽기", kanaDirR2K: "읽기 → 글자", kanaScore: "점수",
@@ -698,6 +759,11 @@
         btnAdd: "追加", btnEditSave: "保存", btnCancel: "キャンセル",
         mngDecks: "単語帳", btnNewDeck: "新しい単語帳", mngMyWords: "自分の単語",
         btnExport: "エクスポート(JSON)", btnImport: "インポート", listSearchPh: "一覧を検索…",
+        mngAllWords: "単語帳 全体", listRecent: "最近追加した単語", listBack: "戻る",
+        btnViewAll: (n) => `単語帳をすべて見る (${n})`,
+        sortNew: "新しい順", sortAz: "ハングル順", tagNew: "NEW",
+        listAllEmpty: "この単語帳に単語がありません。",
+        pageInfo: (c, n) => `${c} / ${n}`,
         kanaHira: "ひらがな", kanaKata: "カタカナ", kanaChart: "表", kanaQuiz: "クイズ",
         kanaSeion: "清音", kanaDakuten: "濁音・半濁音", kanaYoon: "拗音",
         kanaHint: "文字を押すと発音が鳴ります", kanaDirK2R: "文字 → 読み", kanaDirR2K: "読み → 文字", kanaScore: "スコア",
@@ -814,6 +880,8 @@
       type: '<path d="M4 7V4h16v3"/><path d="M9 20h6"/><path d="M12 4v16"/>',
       check: '<path d="M20 6 9 17l-5-5"/>',
       x: '<path d="M18 6 6 18M6 6l12 12"/>',
+      chevL: '<path d="M15 18l-6-6 6-6"/>',
+      chevR: '<path d="M9 18l6-6-6-6"/>',
     };
     function ic(name, cls) { return '<svg class="ic' + (cls ? ' ' + cls : '') + '" viewBox="0 0 24 24" aria-hidden="true">' + (ICONS[name] || '') + '</svg>'; }
     function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c])); }
@@ -1213,9 +1281,16 @@
       if (db.words.some(w => w.word === o.word && w.meaning === o.meaning && w.deck === o.deck)) {
         toast(t('tAddDup'), true); return;
       }
-      db.words.push(mkWord(o)); save();
+      const w = mkWord(o); db.words.push(w); save();
+      markNew(w.id);
       toast(t('tAddedName', o.word));
       renderManage();
+    }
+    // 새로 추가한 단어는 목록 맨 위에 강조 표시 → 전체 보기 중이었다면 기본 목록으로 되돌려 보이게 한다
+    function markNew(id) {
+      newIds.add(id);
+      listView.mode = "recent"; listView.page = 1; listView.q = "";
+      const s = $("#listSearch"); if (s) s.value = "";
     }
 
     /* ============================ 관리: 직접 추가/수정 폼 ============================ */
@@ -1233,7 +1308,8 @@
         if (w) { Object.assign(w, data); save(); toast(t('tEdited')); }
         resetForm();
       } else {
-        db.words.push(mkWord(data)); save(); toast(t('tAddedName', data.word));
+        const w = mkWord(data); db.words.push(w); save();
+        markNew(w.id); toast(t('tAddedName', data.word));
         e.target.reset();
       }
       renderManage();
@@ -1265,11 +1341,20 @@
     }
     function renderDeckManage() {
       const bar = $("#deckManageBar");
-      bar.innerHTML = db.decks.map(d => {
+      const activeDeck = (listView.mode === "all") ? listView.deck : null;
+      // '전체' 칩 + 덱별 칩. 칩 본체 = 전체 보기 진입(그 덱으로 필터), ✕ = 삭제
+      const allChip = `<button class="chip deck-chip${activeDeck === "__all__" ? " active" : ""}" data-d="__all__">${esc(t('chipAll'))} <span style="opacity:.6;">${db.words.length}</span></button>`;
+      bar.innerHTML = allChip + db.decks.map(d => {
         const n = db.words.filter(w => w.deck === d).length;
-        return `<span class="chip" style="cursor:default;">${esc(d)} <span style="opacity:.6;">${n}</span>
-          <button class="link-btn del-deck" data-d="${esc(d)}" style="color:var(--danger); margin-left:6px;">${ic('x')}</button></span>`;
+        return `<span class="chip deck-chip-wrap${activeDeck === d ? " active" : ""}">
+          <button class="deck-chip-body" data-d="${esc(d)}">${esc(d)} <span style="opacity:.6;">${n}</span></button>
+          <button class="link-btn del-deck" data-d="${esc(d)}" style="color:var(--danger); margin-left:6px;" aria-label="${esc(d)} 삭제">${ic('x')}</button></span>`;
       }).join("") + `<button class="mini-btn" id="addDeck">${ic('plus')} ${esc(t('btnNewDeck'))}</button>`;
+      // 칩 본체 클릭 → 그 단어장 전체 보기
+      $$("#deckManageBar .deck-chip, #deckManageBar .deck-chip-body").forEach(b => b.addEventListener("click", (e) => {
+        e.stopPropagation();
+        openAllView(b.dataset.d);
+      }));
       $("#addDeck").addEventListener("click", () => {
         const name = prompt(t('promptNewDeck'));
         if (!name) return;
@@ -1277,7 +1362,8 @@
         if (db.decks.includes(nm)) { toast(t('tDeckExists'), true); return; }
         db.decks.push(nm); save(); renderManage(); toast(t('tDeckCreated', nm));
       });
-      $$("#deckManageBar .del-deck").forEach(b => b.addEventListener("click", () => {
+      $$("#deckManageBar .del-deck").forEach(b => b.addEventListener("click", (e) => {
+        e.stopPropagation();                                  // 칩 본체(전체 보기 진입)로 전파 방지
         const d = b.dataset.d;
         if (db.decks.length <= 1) { toast(t('tDeckMin'), true); return; }
         const n = db.words.filter(w => w.deck === d).length;
@@ -1285,27 +1371,65 @@
         db.words = db.words.filter(w => w.deck !== d);
         db.decks = db.decks.filter(x => x !== d);
         if (ui.deckFilter === d) ui.deckFilter = "__all__";
+        if (listView.deck === d) { listView.deck = "__all__"; listView.page = 1; }
         save(); renderManage(); toast(t('tDeckDeleted'));
       }));
     }
 
     /* ============================ 관리: 단어 목록 ============================ */
-    function renderWordList() {
-      const q = ($("#listSearch").value || "").trim().toLowerCase();
-      let words = db.words.slice().reverse();
-      if (q) words = words.filter(w =>
-        w.word.toLowerCase().includes(q) || w.meaning.toLowerCase().includes(q) ||
-        (w.pron || "").toLowerCase().includes(q) || (w.example || "").toLowerCase().includes(q));
-      $("#wordCount").textContent = t('countUnit', words.length);
-      if (!words.length) {
-        $("#wordList").innerHTML = `<div style="color:var(--text-light);font-size:13px;padding:8px 2px;">${esc(q ? t('listNoResult') : t('listEmpty'))}</div>`;
-        return;
+    /*
+     * 두 가지 모드로 동작한다.
+     *   recent — 기본. 최근 추가한 RECENT_N개만. 검색·필터 없음. 목적은 "방금 추가한 게 들어갔나" 확인.
+     *   all    — '단어장 전체 보기'. 검색 + 덱 필터 + 정렬 + 페이지네이션(PAGE_N개씩).
+     * 어느 모드든 한 번에 그리는 항목 수에 상한이 있어 단어가 수천 개여도 렌더 비용이 일정하다.
+     */
+    const RECENT_N = 10, PAGE_N = 20;
+    let listView = { mode: "recent", page: 1, q: "", deck: "__all__", sort: "new" };
+    const newIds = new Set();       // 이번 세션에 추가한 단어 → 목록에서 강조
+
+    // 목록 헤더를 화면 위로 — sticky nav(64px) 아래로 들어가지 않게 오프셋 보정
+    function scrollListTop() {
+      const el = $("#listHead"); if (!el) return;
+      const nav = document.querySelector("nav");
+      const off = (nav ? nav.getBoundingClientRect().height : 64) + 12;
+      // 모드/페이지 전환은 내용이 통째로 바뀌므로 부드러운 스크롤보다 즉시 이동이 자연스럽다
+      window.scrollTo(0, Math.max(0, el.getBoundingClientRect().top + window.scrollY - off));
+    }
+    function openAllView(deck) {
+      listView.mode = "all"; listView.page = 1; listView.deck = deck || "__all__";
+      renderManage();
+      scrollListTop();
+    }
+    function closeAllView() {
+      listView.mode = "recent"; listView.page = 1; listView.q = "";
+      $("#listSearch").value = "";
+      renderManage(); scrollListTop();
+    }
+
+    // 필터 → 정렬까지 적용된 전체 목록(슬라이스 전)
+    function listWords() {
+      const order = new Map(db.words.map((w, i) => [w.id, i]));   // 저장 순서(입력 순) — createdAt 동률 시 보조 기준
+      let ws = db.words.slice();
+      if (listView.mode === "all") {
+        if (listView.deck !== "__all__") ws = ws.filter(w => w.deck === listView.deck);
+        const q = listView.q.trim().toLowerCase();
+        if (q) ws = ws.filter(w =>
+          w.word.toLowerCase().includes(q) || (w.meaning || "").toLowerCase().includes(q) ||
+          (w.transDfn || "").toLowerCase().includes(q) ||
+          (w.pron || "").toLowerCase().includes(q) || (w.example || "").toLowerCase().includes(q));
       }
-      $("#wordList").innerHTML = words.map(w => `
-        <div class="item">
+      if (listView.mode === "all" && listView.sort === "az") ws.sort((a, b) => a.word.localeCompare(b.word, "ko"));
+      else ws.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0) || order.get(b.id) - order.get(a.id));
+      return ws;
+    }
+
+    function itemHtml(w) {
+      const isNew = newIds.has(w.id);
+      return `
+        <div class="item${isNew ? " is-new" : ""}">
           <span class="status-dot ${w.status === "known" ? "known" : w.status === "unknown" ? "unknown" : ""}" title="${w.status}"></span>
           <div class="info">
-            <div><span class="iw">${esc(w.word)}</span>${w.pron ? `<span class="ip">[${esc(w.pron)}]</span>` : ""} <span class="deck-tag">${esc(w.deck)}</span></div>
+            <div><span class="iw">${esc(w.word)}</span>${w.pron ? `<span class="ip">[${esc(w.pron)}]</span>` : ""} <span class="deck-tag">${esc(w.deck)}</span>${isNew ? `<span class="new-tag">${esc(t('tagNew'))}</span>` : ""}</div>
             <div class="im ja">${jaMain(w) ? esc(jaMain(w)) : `<span style="color:var(--text-light)">${esc(t('noJa'))}</span>`}${jaIsDef(w) ? ` <span class="ja-tag">${esc(t('tagDef'))}</span>` : ""}</div>
             ${w.example ? `<div class="ie">${esc(w.example)}</div>` : ""}
           </div>
@@ -1313,11 +1437,105 @@
             <button class="sq edit" data-id="${esc(w.id)}" title="수정" aria-label="수정">${ic('pencil')}</button>
             <button class="sq del" data-id="${esc(w.id)}" title="삭제" aria-label="삭제">${ic('trash')}</button>
           </div>
-        </div>`).join("");
-      $$("#wordList .edit").forEach(b => b.addEventListener("click", () => editWord(b.dataset.id)));
-      $$("#wordList .del").forEach(b => b.addEventListener("click", () => delWord(b.dataset.id)));
+        </div>`;
     }
-    $("#listSearch").addEventListener("input", renderWordList);
+
+    // 페이저에 찍을 번호들: 1, 현재±1, 마지막 (사이가 벌어지면 …)
+    function pageNums(cur, total) {
+      const keep = [...new Set([1, cur - 1, cur, cur + 1, total])].filter(n => n >= 1 && n <= total).sort((a, b) => a - b);
+      const out = []; let prev = 0;
+      for (const n of keep) { if (prev && n - prev > 1) out.push("…"); out.push(n); prev = n; }
+      return out;
+    }
+
+    function renderWordList() {
+      const isAll = listView.mode === "all";
+      const all = listWords();
+      const total = all.length;
+      const head = $("#listHead"), tools = $("#listTools"), footer = $("#listFooter");
+
+      /* --- 헤더 --- */
+      if (isAll) {
+        const scope = listView.deck === "__all__" ? t('mngAllWords') : listView.deck;
+        head.innerHTML = `<h2 style="margin:0; display:flex; align-items:center;">
+          <button class="back-btn" id="listBack" title="${esc(t('listBack'))}" aria-label="${esc(t('listBack'))}">${ic('chevL')}</button>
+          <span>${esc(scope)}</span> <span class="count" style="margin-left:8px;">${esc(t('countUnit', total))}</span></h2>`;
+        $("#listBack").addEventListener("click", closeAllView);
+      } else {
+        head.innerHTML = `<h2 style="margin:0;">${ic('list')}<span style="margin-left:7px;">${esc(t('mngMyWords'))}</span>
+          <span class="count" id="wordCount">${esc(t('countUnit', db.words.length))}</span></h2>`;
+        head.querySelector(".ic").style.color = "var(--primary)";
+      }
+
+      /* --- 도구줄(전체 보기에서만) --- */
+      tools.hidden = !isAll;
+      if (isAll) {
+        const trunc = (s) => (s.length > 14 ? s.slice(0, 14) + "…" : s);
+        const deckOpts = [{ k: "__all__", label: t('chipAll') }].concat(decksList().map(d => ({ k: d, label: d })));
+        $("#listDeck").innerHTML = deckOpts.map(o =>
+          `<option value="${esc(o.k)}"${listView.deck === o.k ? " selected" : ""}>${esc(trunc(o.label))}</option>`).join("");
+        $("#listDeck").value = listView.deck;
+        $("#listSort").innerHTML = [["new", t('sortNew')], ["az", t('sortAz')]].map(([k, label]) =>
+          `<option value="${k}"${listView.sort === k ? " selected" : ""}>${esc(label)}</option>`).join("");
+        $("#listSort").value = listView.sort;
+      }
+
+      /* --- 항목 --- */
+      let shown, pages = 1;
+      if (isAll) {
+        pages = Math.max(1, Math.ceil(total / PAGE_N));
+        if (listView.page > pages) listView.page = pages;
+        shown = all.slice((listView.page - 1) * PAGE_N, listView.page * PAGE_N);
+      } else {
+        shown = all.slice(0, RECENT_N);
+      }
+
+      if (!total) {
+        const msg = isAll ? (listView.q.trim() ? t('listNoResult') : t('listAllEmpty')) : t('listEmpty');
+        $("#wordList").innerHTML = `<div style="color:var(--text-light);font-size:13px;padding:8px 2px;">${esc(msg)}</div>`;
+      } else {
+        const sub = (!isAll && total > RECENT_N) ? `<div class="list-sub">${esc(t('listRecent'))}</div>` : "";
+        $("#wordList").innerHTML = sub + shown.map(itemHtml).join("");
+      }
+
+      /* --- 하단: 전체 보기 버튼 / 페이저 --- */
+      if (!isAll) {
+        footer.innerHTML = (total > RECENT_N)
+          ? `<button class="view-all" id="viewAll">${esc(t('btnViewAll', total))} ${ic('chevR')}</button>` : "";
+        if (total > RECENT_N) $("#viewAll").addEventListener("click", () => openAllView("__all__"));
+      } else if (pages > 1) {
+        const cur = listView.page;
+        const nums = pageNums(cur, pages).map(n => n === "…"
+          ? `<span class="gap">…</span>`
+          : `<button class="pg${n === cur ? " on" : ""}" data-p="${n}">${n}</button>`).join("");
+        footer.innerHTML = `<div class="pager">
+          <button class="pg" data-p="${cur - 1}"${cur === 1 ? " disabled" : ""} aria-label="이전">${ic('chevL')}</button>
+          ${nums}
+          <button class="pg" data-p="${cur + 1}"${cur === pages ? " disabled" : ""} aria-label="다음">${ic('chevR')}</button>
+          <span class="pinfo">${esc(t('countUnit', total))}</span></div>`;
+        $$("#listFooter .pg").forEach(b => b.addEventListener("click", () => {
+          const p = +b.dataset.p;
+          if (!p || p < 1 || p > pages || p === listView.page) return;
+          listView.page = p; renderWordList(); scrollListTop();
+        }));
+      } else {
+        footer.innerHTML = "";
+      }
+    }
+
+    // 목록 컨트롤 — 이벤트 위임 1회 바인딩(항목마다 붙이지 않는다)
+    $("#wordList").addEventListener("click", (e) => {
+      const b = e.target.closest("button.edit, button.del"); if (!b) return;
+      (b.classList.contains("edit") ? editWord : delWord)(b.dataset.id);
+    });
+    let listSearchTimer = 0;
+    $("#listSearch").addEventListener("input", (e) => {
+      clearTimeout(listSearchTimer);
+      const v = e.target.value;
+      listSearchTimer = setTimeout(() => { listView.q = v; listView.page = 1; renderWordList(); }, 180);
+    });
+    $("#listDeck").addEventListener("change", (e) => { listView.deck = e.target.value; listView.page = 1; renderManage(); });
+    $("#listSort").addEventListener("change", (e) => { listView.sort = e.target.value; listView.page = 1; renderWordList(); });
 
     /* ============================ 내보내기 / 가져오기 ============================ */
     /* ============================ 가나(오십음도) 학습 ============================ */
