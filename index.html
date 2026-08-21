@@ -2,13 +2,14 @@
 <html lang="ko" data-theme="light">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, viewport-fit=cover" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <link rel="manifest" href="/manifest.webmanifest" />
   <link rel="icon" type="image/svg+xml" href="/icon.svg" />
-  <link rel="apple-touch-icon" href="/icon.svg" />
+  <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png" />
+  <link rel="apple-touch-icon" href="/icon-192.png" />
   <meta name="theme-color" content="#F1ECE3" />
   <meta name="google" content="notranslate" />
   <title>일본어 단어장 · 日本語単語帳</title>
@@ -27,15 +28,17 @@
       --card-front-bg: #FAF7F1;
       --card-back-bg: #1A1815;
       --card-back-text: #F1ECE3;
-      --primary: #C8503C;
+      --primary: #C84F3B;
       --primary-dark: #AE4230;
-      --accent: #C8503C;
-      --btn-grad: #C8503C;
+      --accent: #C84F3B;
+      --btn-grad: #C84F3B;
+      --on-accent: #FFFFFF;      /* 강조색 위에 얹는 글자색 (WCAG AA 4.5:1 확보) */
+      --logo: #AE4230;           /* 푸터 로고 — 배경 대비 4.5:1 확보용 */
       --text: #1A1815;
-      --text-light: #8C8578;
+      --text-light: #6C665C;
       --border: #E4DCCC;
       --border-strong: #D3C9B5;
-      --success: #6B8659;
+      --success: #657E54;
       --danger: #B24630;
       --tag-bg: #F1E1DB;
       --tag-text: #A5412F;
@@ -63,6 +66,9 @@
       --primary-dark: #C4553C;
       --accent: #DA6A50;
       --btn-grad: #DA6A50;
+      /* 다크에서는 밝은 주색 위에 흰 글자가 3.4:1뿐 → 먹색을 얹어 5.2:1 확보 (朱墨: 주색 바탕에 먹) */
+      --on-accent: #1A1815;
+      --logo: #DA6A50;           /* 어두운 배경이므로 밝은 주색 (5.4:1) */
       --text: #F1ECE3;
       --text-light: #A39B8C;
       --border: rgba(241,236,227,0.13);
@@ -97,11 +103,15 @@
       overscroll-behavior-y: contain;
       transition: background .3s ease, color .3s ease;
     }
-    .brand-footer { flex: none; display: flex; align-items: center; justify-content: center; gap: 12px; flex-wrap: wrap;
-      padding: 16px 12px calc(18px + env(safe-area-inset-bottom, 0px)); }
+    .brand-footer { flex: none; display: flex; flex-direction: column; align-items: center; gap: 7px;
+      padding: 16px 12px calc(18px + env(safe-area-inset-bottom, 0px)); text-align: center; }
+    .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+      overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
     .foot-brand { display: inline-flex; align-items: center; gap: 8px; }
-    .foot-logo { font-family: var(--serif); font-weight: 700; font-size: 17px; letter-spacing: .08em; color: var(--primary); }
+    .foot-logo { font-family: var(--serif); font-weight: 700; font-size: 17px; letter-spacing: .08em; color: var(--logo); }
     .foot-copy { font-size: 11.5px; color: var(--text-light); letter-spacing: .02em; }
+    /* 공공누리 제1유형 — 출처 표시 의무에 따른 고지 */
+    .foot-attr { font-size: 11px; color: var(--text-light); line-height: 1.6; max-width: 460px; }
     button, a, .tab, .chip, .seg button, input, select, textarea { touch-action: manipulation; }
     button:active, .tab:active, .chip:active, .mini-btn:active, .seg button:active, .lang-choice:active, .kana-cell:active, .quiz-opt:active { transform: scale(0.97); }
     .ja { /* 일본어 텍스트 — 가독성을 위해 자간 살짝 */
@@ -142,7 +152,7 @@
       padding: 8px 14px; border-radius: 8px; transition: all .18s ease;
     }
     .tab:hover { color: var(--text); }
-    .tab.active { color: #fff; background: var(--primary); box-shadow: 0 2px 8px rgba(200,80,60,0.32); }
+    .tab.active { color: var(--on-accent); background: var(--primary); box-shadow: 0 2px 8px rgba(200,80,60,0.32); }
     .nav-right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
     .icon-btn {
       width: 38px; height: 38px; display: grid; place-items: center;
@@ -176,6 +186,7 @@
     .chip.active { background: var(--tag-bg); color: var(--tag-text); border-color: transparent; }
     /* 단어장 칩: 본체 = 전체 보기 진입, ✕ = 삭제 */
     .deck-chip { font-family: inherit; }
+    .chip-n { font-weight: 400; margin-left: 1px; }
     .deck-chip-wrap { display: inline-flex; align-items: center; padding: 0 11px 0 0; cursor: default; }
     .deck-chip-body { border: none; background: none; font: inherit; color: inherit; cursor: pointer; padding: 7px 2px 7px 14px; }
     .toolbar { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; justify-content: space-between; }
@@ -184,7 +195,7 @@
       border: none; background: transparent; cursor: pointer; color: var(--text-light);
       font-size: 13px; font-weight: 600; padding: 6px 12px; border-radius: 7px; transition: all .15s ease;
     }
-    .seg button.active { background: var(--primary); color: #fff; box-shadow: 0 2px 8px rgba(200,80,60,0.35); }
+    .seg button.active { background: var(--primary); color: var(--on-accent); box-shadow: 0 2px 8px rgba(200,80,60,0.35); }
     .mini-btn {
       display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600;
       padding: 8px 14px; border-radius: var(--radius-sm); border: 1.5px solid var(--border);
@@ -236,8 +247,10 @@
       transition: color .15s ease, border-color .15s ease, transform .1s ease; box-shadow: 0 2px 8px rgba(40,28,18,0.07); }
     .card-nav-btn:hover { color: var(--primary); border-color: var(--primary); }
     .card-nav-btn:active { transform: scale(0.9); }
+    /* 카드 앞뒤에 걸쳐 있어 한 색으로는 양쪽 대비를 못 맞춤 → 뒤집힘 상태에 따라 전환 */
     .card-count { position: absolute; left: 18px; bottom: 15px; z-index: 5; font-size: 12.5px; font-weight: 600;
       color: var(--text-light); font-variant-numeric: tabular-nums; letter-spacing: .03em; }
+    .card-inner.flipped ~ .card-count { color: var(--card-back-text); opacity: .6; }
     .card-inner:hover { box-shadow: var(--shadow-card-hover); }
     .card-face {
       position: absolute; inset: 0; backface-visibility: hidden; -webkit-backface-visibility: hidden;
@@ -292,10 +305,10 @@
     }
     .btn-ghost { background: var(--surface); border: 1.5px solid var(--border); color: var(--text); }
     .btn-ghost:hover { border-color: var(--primary); }
-    .btn-primary { background: var(--btn-grad); color: #fff; box-shadow: 0 4px 14px rgba(200,80,60,0.35); }
+    .btn-primary { background: var(--btn-grad); color: var(--on-accent); box-shadow: 0 4px 14px rgba(200,80,60,0.35); }
     .btn-primary:hover { transform: translateY(-1px); }
-    .btn-known { background: var(--success); color: #fff; }
-    .btn-unknown { background: var(--danger); color: #fff; }
+    .btn-known { background: var(--success); color: var(--on-accent); }
+    .btn-unknown { background: var(--danger); color: var(--on-accent); }
     .mark-row { display: flex; gap: 12px; justify-content: center; margin-top: 12px; }
     .hint { text-align: center; color: var(--text-light); font-size: 12.5px; margin-top: 16px; }
     .hint kbd { background: var(--surface-2); border: 1px solid var(--border); border-radius: 5px; padding: 1px 6px; font-size: 11px; }
@@ -303,7 +316,7 @@
     /* 빈 상태 */
     .empty { text-align: center; padding: 70px 20px; color: var(--text-light); }
     .empty .big { font-size: 46px; margin-bottom: 14px; }
-    .empty h3 { color: var(--text); font-size: 18px; margin-bottom: 8px; }
+    .empty h2 { color: var(--text); font-size: 18px; margin-bottom: 8px; }
 
     /* ============================ 관리 페이지 ============================ */
     .panel { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 20px; margin-bottom: 18px; box-shadow: var(--glow); }
@@ -318,6 +331,19 @@
     }
     textarea { resize: vertical; min-height: 62px; line-height: 1.6; }
     input:focus, textarea:focus, select:focus { outline: none; border-color: var(--primary); }
+    /* 키보드 포커스 링 — 마우스 클릭에는 뜨지 않고 Tab 이동에만 보인다 */
+    a:focus-visible, button:focus-visible, input:focus-visible,
+    select:focus-visible, textarea:focus-visible, [tabindex]:focus-visible {
+      outline: 3px solid var(--primary);
+      outline-offset: 2px;
+      border-radius: 6px;
+    }
+    /* 강조색 배경 위에서는 링이 묻히므로 바탕색으로 반전 */
+    .tab.active:focus-visible, .seg button.active:focus-visible,
+    .btn-primary:focus-visible, .btn-known:focus-visible,
+    .btn-unknown:focus-visible, .pager button.on:focus-visible {
+      outline-color: var(--text);
+    }
     .row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
     .search-row { display: flex; gap: 10px; }
     .search-row input { flex: 1; }
@@ -352,7 +378,7 @@
     @keyframes itemIn { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
     .item .new-tag {
       font-size: 10px; font-weight: 700; letter-spacing: .04em; padding: 2px 7px;
-      border-radius: 999px; background: var(--primary); color: #fff; margin-left: 6px;
+      border-radius: 999px; background: var(--primary); color: var(--on-accent); margin-left: 6px;
     }
     .item .info { flex: 1; min-width: 0; }
     .item .iw { font-size: 15px; font-weight: 700; }
@@ -363,12 +389,12 @@
     .item .deck-tag { font-size: 10.5px; font-weight: 700; padding: 2px 8px; border-radius: 999px; background: var(--tag-bg); color: var(--tag-text); }
     .item-acts { display: flex; gap: 6px; flex: none; }
     .sq {
-      width: 32px; height: 32px; border-radius: 8px; border: 1px solid var(--border);
+      width: 40px; height: 40px; border-radius: 8px; border: 1px solid var(--border);
       background: var(--surface); color: var(--text-light); cursor: pointer; font-size: 14px;
       display: grid; place-items: center; transition: all .15s ease;
     }
     .sq:hover { color: var(--text); border-color: var(--border-strong); }
-    .sq.del:hover { color: #fff; background: var(--danger); border-color: var(--danger); }
+    .sq.del:hover { color: var(--on-accent); background: var(--danger); border-color: var(--danger); }
     .status-dot { width: 8px; height: 8px; border-radius: 50%; flex: none; margin-top: 6px; background: var(--text-light); }
     .status-dot.known { background: var(--success); }
     .status-dot.unknown { background: var(--danger); }
@@ -408,12 +434,12 @@
       font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; transition: all .15s ease;
     }
     .pager button:hover:not(:disabled) { color: var(--text); border-color: var(--border-strong); }
-    .pager button.on { background: var(--primary); border-color: var(--primary); color: #fff; }
+    .pager button.on { background: var(--primary); border-color: var(--primary); color: var(--on-accent); }
     .pager button:disabled { opacity: .35; cursor: default; }
     .pager .gap { color: var(--text-light); font-size: 13px; padding: 0 2px; }
     .pager .pinfo { font-size: 12.5px; color: var(--text-light); margin-left: 4px; }
     .link-btn { background: none; border: none; color: var(--primary); font: inherit; font-weight: 600; font-size: 13px; cursor: pointer; }
-    .spin { display: inline-block; width: 15px; height: 15px; border: 2px solid rgba(255,255,255,0.4); border-top-color: #fff; border-radius: 50%; animation: sp .7s linear infinite; }
+    .spin { display: inline-block; width: 15px; height: 15px; border: 2px solid currentColor; opacity: .5; border-top-color: currentColor; border-radius: 50%; animation: sp .7s linear infinite; }
     @keyframes sp { to { transform: rotate(360deg); } }
 
     /* ============================ 토스트 ============================ */
@@ -456,7 +482,7 @@
     .tut-demo-search { display: flex; align-items: center; gap: 8px; width: 100%; padding: 9px 12px;
       border: 1.5px solid var(--border); border-radius: 10px; background: var(--surface-2); font-size: 14px; color: var(--text); }
     .tut-demo-search .kw { flex: 1; text-align: left; font-weight: 700; }
-    .tut-demo-btn { background: var(--btn-grad); color: #fff; font-size: 12px; font-weight: 700; padding: 5px 12px; border-radius: 8px; }
+    .tut-demo-btn { background: var(--btn-grad); color: var(--on-accent); font-size: 12px; font-weight: 700; padding: 5px 12px; border-radius: 8px; }
     .tut-demo-arrow { color: var(--text-light); font-size: 15px; line-height: 1; }
     .tut-demo-result { display: flex; align-items: center; justify-content: space-between; gap: 10px; width: 100%;
       padding: 11px 13px; border: 1.5px solid var(--primary); border-radius: 12px; background: var(--surface);
@@ -465,7 +491,7 @@
     .tut-demo-result .kw { font-size: 15px; font-weight: 700; }
     .tut-demo-result .kp { font-size: 12px; color: var(--text-light); margin-left: 4px; }
     .tut-demo-result .jp { font-size: 13px; font-weight: 600; color: var(--tag-text); margin-top: 2px; }
-    .tut-demo-add { flex: none; background: var(--btn-grad); color: #fff; font-size: 13px; font-weight: 700;
+    .tut-demo-add { flex: none; background: var(--btn-grad); color: var(--on-accent); font-size: 13px; font-weight: 700;
       padding: 8px 14px; border-radius: 10px; white-space: nowrap; box-shadow: 0 3px 12px rgba(200,80,60,0.4); }
     .tut-demo-add.pulse { animation: tutPulse 1.3s ease-in-out infinite; }
     @keyframes tutPulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.07); } }
@@ -473,7 +499,7 @@
     /* ============================ 가나 학습 ============================ */
     .kana-controls { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; margin-bottom: 22px; }
     .kana-section { margin-bottom: 26px; }
-    .kana-section h3 { font-size: 14px; font-weight: 700; color: var(--text-light); text-align: center; margin-bottom: 12px; }
+    .kana-section h2 { font-size: 14px; font-weight: 700; color: var(--text-light); text-align: center; margin-bottom: 12px; }
     .kana-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; max-width: 520px; margin: 0 auto; }
     .kana-grid.yoon { grid-template-columns: repeat(3, 1fr); max-width: 360px; }
     .kana-cell { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
@@ -495,8 +521,8 @@
     .quiz-opt { padding: 18px; font-size: 22px; font-weight: 700; border: 1.5px solid var(--border);
       border-radius: var(--radius-md); background: var(--surface); color: var(--text); cursor: pointer; transition: all .12s ease; }
     .quiz-opt:hover:not(:disabled) { border-color: var(--primary); }
-    .quiz-opt.correct { background: var(--success); color: #fff; border-color: var(--success); }
-    .quiz-opt.wrong { background: var(--danger); color: #fff; border-color: var(--danger); }
+    .quiz-opt.correct { background: var(--success); color: var(--on-accent); border-color: var(--success); }
+    .quiz-opt.wrong { background: var(--danger); color: var(--on-accent); border-color: var(--danger); }
 
     /* ============================ 반응형 ============================ */
     @media (max-width: 560px) {
@@ -541,6 +567,9 @@
     </div>
   </nav>
 
+  <main id="main">
+  <h1 class="sr-only" data-i18n="appTitle">일본어 단어장</h1>
+
   <!-- ==================== 학습 페이지 ==================== -->
   <section id="page-study" class="page active">
     <div class="wrap">
@@ -574,11 +603,11 @@
         <h2><svg class="ic" style="color:var(--primary);margin-right:7px" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg><span data-i18n="mngAddTitle">사전에서 단어 추가</span></h2>
         <p class="desc" data-i18n="mngAddDesc">국립국어원 한국어기초사전에서 한국어 단어를 검색해 일본어 뜻·발음·예문을 자동으로 채웁니다.</p>
         <div class="search-row">
-          <input type="text" id="searchInput" data-i18n-ph="searchPh" placeholder="한국어 단어 검색 (예: 나무, 학교, 공부하다)" autocomplete="off" />
+          <input type="text" id="searchInput" data-i18n-al="mngAddTitle" data-i18n-ph="searchPh" placeholder="한국어 단어 검색 (예: 나무, 학교, 공부하다)" autocomplete="off" />
           <button id="searchBtn" class="btn btn-primary" data-i18n="btnSearch">검색</button>
         </div>
         <div style="margin-top:12px; font-size:13px; color:var(--text-light);">
-          <span data-i18n="mngTargetDeck">추가할 단어장:</span>
+          <label for="targetDeck" data-i18n="mngTargetDeck">추가할 단어장:</label>
           <select id="targetDeck" style="width:auto; display:inline-block; margin-left:6px; padding:6px 10px;"></select>
         </div>
         <div id="results" class="results"></div>
@@ -591,14 +620,14 @@
         <form id="manualForm">
           <input type="hidden" id="editId" />
           <div class="row-2">
-            <div class="field"><label data-i18n="fldWord">단어 (한국어)</label><input type="text" id="fWord" required /></div>
-            <div class="field"><label data-i18n="fldPron">발음</label><input type="text" id="fPron" data-i18n-ph="fldPronPh" placeholder="예: 나무" /></div>
+            <div class="field"><label for="fWord" data-i18n="fldWord">단어 (한국어)</label><input type="text" id="fWord" required /></div>
+            <div class="field"><label for="fPron" data-i18n="fldPron">발음</label><input type="text" id="fPron" data-i18n-ph="fldPronPh" placeholder="예: 나무" /></div>
           </div>
           <div class="row-2">
-            <div class="field"><label data-i18n="fldMeaning">뜻 (일본어)</label><input type="text" id="fMeaning" class="ja" data-i18n-ph="fldMeaningPh" placeholder="예: き【木】" required /></div>
-            <div class="field"><label data-i18n="fldDeck">단어장</label><select id="fDeck"></select></div>
+            <div class="field"><label for="fMeaning" data-i18n="fldMeaning">뜻 (일본어)</label><input type="text" id="fMeaning" class="ja" data-i18n-ph="fldMeaningPh" placeholder="예: き【木】" required /></div>
+            <div class="field"><label for="fDeck" data-i18n="fldDeck">단어장</label><select id="fDeck"></select></div>
           </div>
-          <div class="field"><label data-i18n="fldExample">예문</label><textarea id="fExample" data-i18n-ph="fldExamplePh" placeholder="예문 (선택)"></textarea></div>
+          <div class="field"><label for="fExample" data-i18n="fldExample">예문</label><textarea id="fExample" data-i18n-ph="fldExamplePh" placeholder="예문 (선택)"></textarea></div>
           <div style="display:flex; gap:10px;">
             <button type="submit" class="btn btn-primary" id="submitBtn" data-i18n="btnAdd">추가</button>
             <button type="button" class="btn btn-ghost" id="cancelEdit" data-i18n="btnCancel" style="display:none;">취소</button>
@@ -616,10 +645,10 @@
       <div class="panel">
         <div class="list-head" id="listHead"></div>
         <div class="list-tools" id="listTools" hidden>
-          <input type="text" id="listSearch" data-i18n-ph="listSearchPh" placeholder="목록에서 검색…" />
+          <input type="text" id="listSearch" data-i18n-al="listSearchPh" data-i18n-ph="listSearchPh" placeholder="목록에서 검색…" />
           <div class="list-filter-row">
-            <select id="listDeck" aria-label="단어장"></select>
-            <select id="listSort" aria-label="정렬"></select>
+            <select id="listDeck" data-i18n-al="fldDeck"></select>
+            <select id="listSort" data-i18n-al="alSort"></select>
           </div>
         </div>
         <div id="wordList" class="list"></div>
@@ -644,6 +673,7 @@
       <div id="kanaBody"></div>
     </div>
   </section>
+  </main>
 
   <!-- ==================== 언어 선택 (첫 실행) ==================== -->
   <div id="langPicker" class="tutorial-overlay" style="display:none;">
@@ -673,7 +703,8 @@
 
   <footer class="brand-footer">
     <span class="foot-brand"><span id="apiDot" class="api-dot" title="사전 API 상태"></span><span class="foot-logo">単語帳</span></span>
-    <span class="foot-copy">© stardust.lab · All rights reserved.</span>
+    <span class="foot-copy">Copyright © stardust.lab. All rights reserved.</span>
+    <span class="foot-attr" data-i18n="footAttr">본 서비스는 국립국어원 한국어기초사전 오픈 API를 활용하였습니다. (공공누리 제1유형)</span>
   </footer>
 
   <div id="toast" class="toast"></div>
@@ -712,7 +743,8 @@
         btnAdd: "추가", btnEditSave: "수정 저장", btnCancel: "취소",
         mngDecks: "단어장", btnNewDeck: "새 단어장", mngMyWords: "내 단어",
         btnExport: "내보내기(JSON)", btnImport: "가져오기", listSearchPh: "목록에서 검색…",
-        mngAllWords: "단어장 전체", listRecent: "최근 추가한 단어", listBack: "돌아가기",
+        mngAllWords: "단어장 전체", listRecent: "최근 추가한 단어", listBack: "돌아가기", alSort: "정렬 기준",
+        appTitle: "일본어 단어장", footAttr: "본 서비스는 국립국어원 한국어기초사전 오픈 API를 활용하였습니다. (공공누리 제1유형)",
         btnViewAll: (n) => `단어장 전체 보기 (${n}개)`,
         sortNew: "최신순", sortAz: "가나다순", tagNew: "NEW",
         listAllEmpty: "이 단어장에 단어가 없습니다.",
@@ -760,7 +792,8 @@
         btnAdd: "追加", btnEditSave: "保存", btnCancel: "キャンセル",
         mngDecks: "単語帳", btnNewDeck: "新しい単語帳", mngMyWords: "自分の単語",
         btnExport: "エクスポート(JSON)", btnImport: "インポート", listSearchPh: "一覧を検索…",
-        mngAllWords: "単語帳 全体", listRecent: "最近追加した単語", listBack: "戻る",
+        mngAllWords: "単語帳 全体", listRecent: "最近追加した単語", listBack: "戻る", alSort: "並び替え",
+        appTitle: "韓国語単語帳", footAttr: "本サービスは国立国語院「韓国語基礎辞典」オープンAPIを利用しています。(公共ヌリ 第1類型)",
         btnViewAll: (n) => `単語帳をすべて見る (${n})`,
         sortNew: "新しい順", sortAz: "ハングル順", tagNew: "NEW",
         listAllEmpty: "この単語帳に単語がありません。",
@@ -802,6 +835,7 @@
       document.querySelectorAll("[data-i18n]").forEach(el => { el.textContent = t(el.dataset.i18n); });
       document.querySelectorAll("[data-i18n-ph]").forEach(el => { el.placeholder = t(el.dataset.i18nPh); });
       document.querySelectorAll("[data-i18n-title]").forEach(el => { el.title = t(el.dataset.i18nTitle); });
+      document.querySelectorAll("[data-i18n-al]").forEach(el => { el.setAttribute("aria-label", t(el.dataset.i18nAl)); });
       $("#langBtn").textContent = (lang === "ja") ? "한" : "日";
       $("#kanaTab").style.display = (lang === "ja") ? "none" : "";
     }
@@ -1070,7 +1104,7 @@
       const area = $("#studyArea");
       if (!ui.queue.length) {
         area.innerHTML = `<div class="empty"><div class="big">${ic('inbox', 'ic-xl')}</div>
-          <h3>${esc(t('emptyTitle'))}</h3>
+          <h2>${esc(t('emptyTitle'))}</h2>
           <p>${esc(t('emptyDesc'))}</p></div>`;
         return;
       }
@@ -1344,11 +1378,11 @@
       const bar = $("#deckManageBar");
       const activeDeck = (listView.mode === "all") ? listView.deck : null;
       // '전체' 칩 + 덱별 칩. 칩 본체 = 전체 보기 진입(그 덱으로 필터), ✕ = 삭제
-      const allChip = `<button class="chip deck-chip${activeDeck === "__all__" ? " active" : ""}" data-d="__all__">${esc(t('chipAll'))} <span style="opacity:.6;">${db.words.length}</span></button>`;
+      const allChip = `<button class="chip deck-chip${activeDeck === "__all__" ? " active" : ""}" data-d="__all__">${esc(t('chipAll'))} <span class="chip-n">${db.words.length}</span></button>`;
       bar.innerHTML = allChip + db.decks.map(d => {
         const n = db.words.filter(w => w.deck === d).length;
         return `<span class="chip deck-chip-wrap${activeDeck === d ? " active" : ""}">
-          <button class="deck-chip-body" data-d="${esc(d)}">${esc(d)} <span style="opacity:.6;">${n}</span></button>
+          <button class="deck-chip-body" data-d="${esc(d)}">${esc(d)} <span class="chip-n">${n}</span></button>
           <button class="link-btn del-deck" data-d="${esc(d)}" style="color:var(--danger); margin-left:6px;" aria-label="${esc(d)} 삭제">${ic('x')}</button></span>`;
       }).join("") + `<button class="mini-btn" id="addDeck">${ic('plus')} ${esc(t('btnNewDeck'))}</button>`;
       // 칩 본체 클릭 → 그 단어장 전체 보기
@@ -1592,9 +1626,9 @@
     }
     function renderKanaChart() {
       $("#kanaBody").innerHTML =
-        `<div class="kana-section"><h3>청음 (清音)</h3><div class="kana-grid">${kanaGridCells(KANA.seion)}</div></div>
-         <div class="kana-section"><h3>탁음·반탁음 (濁音·半濁音)</h3><div class="kana-grid">${kanaGridCells(KANA.dakuten)}</div></div>
-         <div class="kana-section"><h3>요음 (拗音)</h3><div class="kana-grid yoon">${kanaGridCells(KANA.yoon)}</div></div>
+        `<div class="kana-section"><h2>청음 (清音)</h2><div class="kana-grid">${kanaGridCells(KANA.seion)}</div></div>
+         <div class="kana-section"><h2>탁음·반탁음 (濁音·半濁音)</h2><div class="kana-grid">${kanaGridCells(KANA.dakuten)}</div></div>
+         <div class="kana-section"><h2>요음 (拗音)</h2><div class="kana-grid yoon">${kanaGridCells(KANA.yoon)}</div></div>
          <p class="kana-hint">글자를 누르면 발음이 나옵니다 ${ic('volume')}</p>`;
       $$("#kanaBody .kana-cell[data-h]").forEach(b => b.addEventListener("click", () => speakKana(b.dataset.h)));
     }
