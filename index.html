@@ -380,7 +380,8 @@
       font-size: 10px; font-weight: 700; letter-spacing: .04em; padding: 2px 7px;
       border-radius: 999px; background: var(--primary); color: var(--on-accent); margin-left: 6px;
     }
-    .item .info { flex: 1; min-width: 0; }
+    /* 일본어 뜻은 공백 없이 길게 이어질 수 있어 좁은 화면에서 가로로 삐져나온다 */
+    .item .info { flex: 1; min-width: 0; overflow-wrap: anywhere; }
     .item .iw { font-size: 15px; font-weight: 700; }
     .item .ip { font-size: 12.5px; color: var(--text-light); font-weight: 500; margin-left: 6px; }
     .item .im { font-size: 13.5px; color: var(--tag-text); margin-top: 3px; }
