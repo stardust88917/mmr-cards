@@ -282,12 +282,36 @@ app.stardust.mmrcards
 
 ---
 
+## Play 스토어 출시 준비 ③ 라이브 검증
+
+라이브 배포본(https://mmr-cards-jp.vercel.app)에서 TWA 전제 조건을 실측.
+
+| 항목 | 결과 |
+|---|---|
+| HTTPS | 200, HTTP → HTTPS **308 리다이렉트** |
+| manifest | `application/manifest+json` 로 서빙, 필수 필드 누락 0, display=standalone |
+| 아이콘 | 192 / 512 / maskable / 스토어용 전부 200 |
+| Service Worker | 등록·활성(scope `/`), 캐시 `mmr-cards-v2`, 셸 6개 적재 |
+| SW 예외 처리 | `/api/` 는 캐시하지 않음(확인) |
+| 개인정보처리방침 | **`/privacy`** (`cleanUrls: true` 라 `/privacy.html` 은 308) |
+| `.well-known/assetlinks.json` | 200, `application/json` |
+
+### 반응형 전수 점검
+320 / 360 / 390 / 412px × 3탭 가로 오버플로 검사 → **360px 관리탭에서 `.im` 6px 초과** 발견. 공백 없이 이어지는 일본어 뜻(`うみ【海】。かいよう【海洋】`)이 안 끊긴 것 → `.item .info { overflow-wrap: anywhere }`. 나머지 폭은 정상.
+
+### assetlinks.json — 지문만 미완
+서명 SHA-256 은 Play App Signing 등록 후에야 발급되므로 자리표시자로 배치했다. **이번 배포의 목적은 Vercel 이 점(.)으로 시작하는 디렉터리를 서빙하는지 확인**하는 것이었고(정적 호스트가 흔히 제외한다), 정상 서빙됨을 확인했다. TWA 빌드 단계에서 발견하면 늦다.
+
+지문을 받은 뒤 `REPLACE_WITH_PLAY_APP_SIGNING_SHA256` 한 줄만 교체하면 된다.
+
+---
+
 ## 남은 것
 - [ ] Play Console 개발자 계정 생성($25) + 신원 확인
 - [ ] 테스터 20명 모집 → 14일 비공개 테스트
 - [ ] 서명 keystore 생성 (비밀번호가 필요하므로 본인 직접)
-- [ ] PWABuilder 로 AAB 생성 → `/.well-known/assetlinks.json` 에 SHA-256 지문 등록
+- [ ] PWABuilder 로 AAB 생성 → `.well-known/assetlinks.json` 의 지문 자리표시자 교체
 - [ ] 스토어 자산: 폰 스크린샷, 그래픽 이미지 1024×500, 짧은 설명 80자, 자세한 설명 4000자
-- [ ] 콘텐츠 등급 설문 · 데이터 보안 양식("수집 안 함") · 개인정보처리방침 URL(`/privacy.html`)
+- [ ] 콘텐츠 등급 설문 · 데이터 보안 양식("수집 안 함") · 개인정보처리방침 URL(`/privacy`)
 
 *updated 2026-08-21*
