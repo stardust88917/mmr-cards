@@ -346,8 +346,9 @@
     .item.is-new {
       border-color: var(--primary); background: var(--tag-bg);
       box-shadow: inset 3px 0 0 var(--primary);
-      animation: itemIn .45s ease both;
     }
+    /* fade-in은 추가 직후 첫 렌더에서만. 목록을 다시 그릴 때마다 반복되지 않게 분리 */
+    .item.is-new.just-added { animation: itemIn .45s ease both; }
     @keyframes itemIn { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
     .item .new-tag {
       font-size: 10px; font-weight: 700; letter-spacing: .04em; padding: 2px 7px;
@@ -1386,6 +1387,7 @@
     const RECENT_N = 10, PAGE_N = 20;
     let listView = { mode: "recent", page: 1, q: "", deck: "__all__", sort: "new" };
     const newIds = new Set();       // 이번 세션에 추가한 단어 → 목록에서 강조
+    const animated = new Set();     // fade-in을 이미 재생한 단어 → 재렌더 시 반복 방지
 
     // 목록 헤더를 화면 위로 — sticky nav(64px) 아래로 들어가지 않게 오프셋 보정
     function scrollListTop() {
@@ -1425,8 +1427,10 @@
 
     function itemHtml(w) {
       const isNew = newIds.has(w.id);
+      const anim = isNew && !animated.has(w.id);   // 이 단어의 첫 렌더에서만 fade-in
+      if (anim) animated.add(w.id);
       return `
-        <div class="item${isNew ? " is-new" : ""}">
+        <div class="item${isNew ? " is-new" : ""}${anim ? " just-added" : ""}">
           <span class="status-dot ${w.status === "known" ? "known" : w.status === "unknown" ? "unknown" : ""}" title="${w.status}"></span>
           <div class="info">
             <div><span class="iw">${esc(w.word)}</span>${w.pron ? `<span class="ip">[${esc(w.pron)}]</span>` : ""} <span class="deck-tag">${esc(w.deck)}</span>${isNew ? `<span class="new-tag">${esc(t('tagNew'))}</span>` : ""}</div>
