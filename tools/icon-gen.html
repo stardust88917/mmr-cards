@@ -8,35 +8,41 @@
   body { background:#2A2723; color:#EDE7DC; margin:0; padding:26px 30px 60px;
          font-family:'Malgun Gothic','Apple SD Gothic Neo',sans-serif; }
   h1 { font-size:19px; margin:0 0 6px; }
-  .sub { font-size:12.5px; color:#9A9285; line-height:1.7; margin-bottom:26px; max-width:760px; }
+  h2 { font-size:14px; color:#9A9285; margin:34px 0 14px; letter-spacing:.04em;
+       border-top:1px solid #3B372F; padding-top:20px; }
+  .sub { font-size:12.5px; color:#9A9285; line-height:1.7; margin-bottom:20px; max-width:780px; }
   .sub code { background:#3B372F; padding:1px 6px; border-radius:4px; }
-  .row { display:flex; gap:30px; align-items:flex-start; margin-bottom:26px;
-         padding-bottom:24px; border-bottom:1px solid #3B372F; }
-  .meta { width:210px; flex:none; }
-  .tag { display:inline-block; font-size:10.5px; font-weight:800; letter-spacing:.08em;
-         background:#C84F3B; color:#fff; padding:3px 9px; border-radius:5px; margin-bottom:9px; }
-  .name { font-size:15px; font-weight:700; margin-bottom:5px; }
-  .desc { font-size:12px; color:#A8A093; line-height:1.65; margin-bottom:12px; }
+  .row { display:flex; gap:28px; align-items:flex-start; margin-bottom:22px; }
+  .meta { width:200px; flex:none; }
+  .tag { display:inline-block; font-size:10px; font-weight:800; letter-spacing:.08em;
+         background:#3B372F; color:#A8A093; padding:3px 9px; border-radius:5px; margin-bottom:8px; }
+  .tag.on { background:#C84F3B; color:#fff; }
+  .name { font-size:15px; font-weight:700; margin-bottom:4px; }
+  .ratio { font-size:11.5px; color:#8C8578; margin-bottom:10px; }
+  .ratio.warn { color:#E08A72; }
   .dl { font-size:12px; font-weight:700; background:#C84F3B; color:#fff; border:none;
         padding:8px 14px; border-radius:7px; cursor:pointer; }
   .dl:hover { background:#AE4230; }
-  .shots { display:flex; gap:20px; align-items:flex-end; flex-wrap:wrap; }
+  .dl.ghost { background:transparent; color:#A8A093; border:1px solid #4A453C; }
+  .dl.ghost:hover { border-color:#C84F3B; color:#EDE7DC; background:transparent; }
+  .shots { display:flex; gap:18px; align-items:flex-end; flex-wrap:wrap; }
   .shot { text-align:center; }
-  .cap { font-size:10.5px; color:#8C8578; margin-top:7px; }
+  .cap { font-size:10.5px; color:#8C8578; margin-top:6px; }
   canvas { display:block; }
   .circ { border-radius:50%; overflow:hidden; }
   .sq22 { border-radius:22.5%; overflow:hidden; }
-  .launcher { background:linear-gradient(160deg,#4a5568,#2d3748); padding:12px 14px;
-              border-radius:12px; display:flex; gap:14px; align-items:center; }
+  .launcher { background:linear-gradient(160deg,#4a5568,#2d3748); padding:11px 13px;
+              border-radius:12px; display:flex; gap:13px; align-items:center; }
 </style></head><body>
 
 <h1>mmr-cards 앱 아이콘 생성기</h1>
 <div class="sub">
   키컬러: 크림 <code>#F1ECE3</code> · 먹 <code>#1A1815</code> · 주색 <code>#C84F3B</code><br>
-  브라우저로 이 파일을 그냥 열면 된다(서버 불필요). 안을 고르고 <b>내려받기</b>를 누르면
+  브라우저로 이 파일을 그냥 열면 된다(서버 불필요). <b>내려받기</b>를 누르면
   <code>icon-192.png</code> · <code>icon-512.png</code> · <code>icon-maskable-512.png</code> ·
-  <code>playstore-512.png</code> 4개가 저장된다. 그걸 프로젝트 루트에 덮어쓰면 교체 완료.<br>
-  <b>maskable</b>은 원형·스퀴클 등 어떤 마스크로 잘려도 글자가 살아남도록 safe zone 안으로 축소한 별도 버전이다.
+  <code>playstore-512.png</code> 4개가 저장되고, 프로젝트 루트에 덮어쓰면 교체 완료.<br>
+  <b>maskable</b>은 원형·스퀴클 등 어떤 마스크로 잘려도 글자가 살아남도록 safe zone 안으로 축소한 버전.
+  숫자는 <b>글자/바탕 대비</b>로, 3:1 미만이면 48dp 에서 눈에 띄게 물러나 보인다.
 </div>
 <div id="out"></div>
 
@@ -45,57 +51,54 @@ const CREAM = "#F1ECE3", INK = "#1A1815", RED = "#C84F3B";
 const MIN = "'Zen Old Mincho','Noto Serif KR',serif";   // 한자·가나 — 明朝
 const KOR = "'Nanum Myeongjo','Noto Serif KR',serif";   // 한글 — 명조
 
-function base(size, bg) {
+/* ── 렌더러 ────────────────────────────────────────────────
+   split : 대각 분할 2문자 — { a:상단좌 바탕, b:하단우 바탕, ga:あ색, gk:가색 }
+   solid : 단일 문자      — { bg, ch, fg, font }                              */
+function render(v, size, maskable) {
   const c = document.createElement("canvas");
   c.width = c.height = size;
   const x = c.getContext("2d");
-  x.fillStyle = bg; x.fillRect(0, 0, size, size);
-  return { c, x };
-}
-function glyph(x, size, ch, color, font, scale, cx, cy) {
-  x.fillStyle = color; x.textAlign = "center"; x.textBaseline = "middle";
-  x.font = "700 " + Math.round(size * scale) + "px " + font;
-  x.fillText(ch, size * cx, size * cy);
-}
-
-/* A. 한글 「가」 단독 — 주색 바탕 */
-function A(size, maskable) {
-  const { c, x } = base(size, RED);
-  glyph(x, size, "가", CREAM, KOR, maskable ? 0.42 : 0.56, 0.5, 0.53);
-  return c;
-}
-/* B. あ + 가 대각 분할 */
-function B(size, maskable) {
-  const { c, x } = base(size, INK);
-  x.fillStyle = RED;
-  x.beginPath(); x.moveTo(size, 0); x.lineTo(size, size); x.lineTo(0, size); x.closePath(); x.fill();
-  const s = maskable ? 0.26 : 0.33;
-  glyph(x, size, "あ", CREAM, MIN, s, maskable ? 0.35 : 0.31, maskable ? 0.36 : 0.32);
-  glyph(x, size, "가", CREAM, KOR, s, maskable ? 0.65 : 0.69, maskable ? 0.65 : 0.69);
-  return c;
-}
-/* C. 한자 「韓」 — 크림 바탕 (초기 単 아이콘 계승) */
-function C(size, maskable) {
-  const { c, x } = base(size, CREAM);
-  glyph(x, size, "韓", RED, MIN, maskable ? 0.40 : 0.54, 0.5, 0.53);
-  return c;
-}
-/* 참고: 초기 버전 (2026-08-21 이전) */
-function LEGACY(size, maskable) {
-  const { c, x } = base(size, RED);
-  glyph(x, size, "単", CREAM, MIN, maskable ? 0.40 : 0.53, 0.5, 0.52);
+  const put = (ch, col, font, scale, cx, cy) => {
+    x.fillStyle = col; x.textAlign = "center"; x.textBaseline = "middle";
+    x.font = "700 " + Math.round(size * scale) + "px " + font;
+    x.fillText(ch, size * cx, size * cy);
+  };
+  if (v.type === "split") {
+    x.fillStyle = v.a; x.fillRect(0, 0, size, size);
+    x.fillStyle = v.b;
+    x.beginPath(); x.moveTo(size, 0); x.lineTo(size, size); x.lineTo(0, size); x.closePath(); x.fill();
+    const s = maskable ? 0.26 : 0.33;
+    put("あ", v.ga, MIN, s, maskable ? 0.35 : 0.31, maskable ? 0.36 : 0.32);
+    put("가", v.gk, KOR, s, maskable ? 0.65 : 0.69, maskable ? 0.65 : 0.69);
+  } else {
+    x.fillStyle = v.bg; x.fillRect(0, 0, size, size);
+    put(v.ch, v.fg, v.font, maskable ? 0.41 : 0.55, 0.5, 0.53);
+  }
   return c;
 }
 
-const OPTS = [
-  { k: "A", fn: A, name: "한글 「가」", tag: "가장 직관적",
-    desc: "주색 바탕에 크림 한글. 「가」는 가나다의 첫 글자라 한글을 몰라도 '한국어'로 읽힌다. 한 글자뿐이라 48dp에서 가장 또렷하다." },
-  { k: "B", fn: B, name: "あ + 가 대각 분할", tag: "기능이 드러남",
-    desc: "먹/주색 대각 분할에 두 문자의 첫 글자를 하나씩. 일본어↔한국어를 오가는 앱이라는 게 바로 보인다. 다만 48dp에선 두 글자가 작아진다." },
-  { k: "C", fn: C, name: "한자 「韓」", tag: "기존 아이덴티티 계승",
-    desc: "크림 종이에 주색 明朝. 일본인은 韓国語의 韓을 즉시 '한국어'로 읽는다. 초기 単 아이콘의 결을 그대로 잇는 안." },
-  { k: "L", fn: LEGACY, name: "「単」 (초기 버전)", tag: "참고",
-    desc: "2026-08-21까지 쓰던 아이콘. '단어장'의 単이라 언어 방향성이 드러나지 않는다." },
+/* ── WCAG 대비 ── */
+const hx = h => { h = h.replace("#",""); return [0,2,4].map(i => parseInt(h.slice(i,i+2),16)); };
+const lin = c => { c /= 255; return c <= 0.03928 ? c/12.92 : Math.pow((c+0.055)/1.055, 2.4); };
+const L = h => { const [r,g,b] = hx(h); return 0.2126*lin(r) + 0.7152*lin(g) + 0.0722*lin(b); };
+const R = (p,q) => { const a = L(p), b = L(q); const [hi,lo] = a>b ? [a,b] : [b,a]; return (hi+0.05)/(lo+0.05); };
+
+const VARIANTS = [
+  { id:"B6", chosen:true, type:"split", name:"주색 / 크림", a:RED,   b:CREAM, ga:CREAM, gk:INK,
+    note:"채택. 주색 면적이 넓어 스토어 목록에서 채도로 튀고, 주인공인 「가」가 크림 위 먹이라 가장 선명하다. 세 키컬러가 모두 살아있는 유일한 조합." },
+  { id:"B1", type:"split", name:"먹 / 주색",   a:INK,   b:RED,   ga:CREAM, gk:CREAM },
+  { id:"B2", type:"split", name:"주색 / 먹",   a:RED,   b:INK,   ga:CREAM, gk:CREAM },
+  { id:"B3", type:"split", name:"크림 / 주색", a:CREAM, b:RED,   ga:INK,   gk:CREAM },
+  { id:"B4", type:"split", name:"크림 / 먹",   a:CREAM, b:INK,   ga:RED,   gk:CREAM },
+  { id:"B5", type:"split", name:"먹 / 크림",   a:INK,   b:CREAM, ga:CREAM, gk:RED   },
+];
+const OTHERS = [
+  { id:"A", type:"solid", name:"한글 「가」", bg:RED,   ch:"가", fg:CREAM, font:KOR,
+    note:"48dp 가독성은 최고지만, 「한」 단일 글자를 쓰는 경쟁 앱이 이미 있다." },
+  { id:"C", type:"solid", name:"한자 「韓」", bg:CREAM, ch:"韓", fg:RED,   font:MIN,
+    note:"일본인은 韓国語의 韓을 즉시 읽는다. 다만 '언어 학습'보다 '한국 관련'으로 읽힌다." },
+  { id:"L", type:"solid", name:"「単」 초기안", bg:RED, ch:"単", fg:CREAM, font:MIN,
+    note:"2026-08-21 까지 쓰던 아이콘. 언어 방향성이 드러나지 않는다." },
 ];
 
 function download(name, dataUrl) {
@@ -103,52 +106,67 @@ function download(name, dataUrl) {
   a.href = dataUrl; a.download = name;
   document.body.appendChild(a); a.click(); a.remove();
 }
-function buildSet(fn) {
+function buildSet(v) {
   return {
-    "icon-192.png":           fn(192, false).toDataURL("image/png"),
-    "icon-512.png":           fn(512, false).toDataURL("image/png"),
-    "icon-maskable-512.png":  fn(512, true).toDataURL("image/png"),
-    "playstore-512.png":      fn(512, false).toDataURL("image/png"),
+    "icon-192.png":          render(v, 192, false).toDataURL("image/png"),
+    "icon-512.png":          render(v, 512, false).toDataURL("image/png"),
+    "icon-maskable-512.png": render(v, 512, true ).toDataURL("image/png"),
+    "playstore-512.png":     render(v, 512, false).toDataURL("image/png"),
   };
 }
 
 const out = document.getElementById("out");
-function render() {
-  out.innerHTML = "";
-  OPTS.forEach(o => {
-    const row = document.createElement("div"); row.className = "row";
-    const meta = document.createElement("div"); meta.className = "meta";
-    meta.innerHTML = '<span class="tag">' + o.tag + '</span><div class="name">' + o.k + '. ' + o.name +
-                     '</div><div class="desc">' + o.desc + '</div>';
-    const btn = document.createElement("button"); btn.className = "dl";
-    btn.textContent = o.k + "안 내려받기 (4개)";
-    btn.onclick = () => {
-      const set = buildSet(o.fn);
-      Object.entries(set).forEach(([n, u], i) => setTimeout(() => download(n, u), i * 220));
-    };
-    meta.appendChild(btn);
-    row.appendChild(meta);
+function card(v) {
+  const row = document.createElement("div"); row.className = "row";
+  const meta = document.createElement("div"); meta.className = "meta";
+  const ra = v.type === "split" ? R(v.ga, v.a) : R(v.fg, v.bg);
+  const rk = v.type === "split" ? R(v.gk, v.b) : null;
+  const weak = ra < 3 || (rk !== null && rk < 3);
+  meta.innerHTML =
+    '<span class="tag' + (v.chosen ? ' on' : '') + '">' + (v.chosen ? '채택' : v.id) + '</span>' +
+    '<div class="name">' + v.id + '. ' + v.name + '</div>' +
+    '<div class="ratio' + (weak ? ' warn' : '') + '">' +
+      (rk !== null ? 'あ ' + ra.toFixed(1) + ':1 &nbsp; 가 ' + rk.toFixed(1) + ':1'
+                   : v.ch + ' ' + ra.toFixed(1) + ':1') + '</div>' +
+    (v.note ? '<div class="ratio" style="color:#A8A093;line-height:1.6">' + v.note + '</div>' : '');
+  const btn = document.createElement("button");
+  btn.className = "dl" + (v.chosen ? "" : " ghost");
+  btn.textContent = v.id + " 내려받기 (4개)";
+  btn.onclick = () => Object.entries(buildSet(v))
+    .forEach(([n, u], i) => setTimeout(() => download(n, u), i * 220));
+  meta.appendChild(btn);
+  row.appendChild(meta);
 
-    const shots = document.createElement("div"); shots.className = "shots";
-    const add = (node, cap) => {
-      const d = document.createElement("div"); d.className = "shot";
-      d.appendChild(node);
-      const p = document.createElement("div"); p.className = "cap"; p.textContent = cap;
-      d.appendChild(p); shots.appendChild(d);
-    };
-    const big = o.fn(150, false); big.className = "sq22"; add(big, "150px");
-    const circ = o.fn(96, true); circ.className = "circ"; add(circ, "maskable · 원형");
-    const l = document.createElement("div"); l.className = "launcher";
-    [0, 1].forEach(i => {
-      const s = o.fn(96, i === 1);
-      s.style.width = "48px"; s.style.height = "48px";
-      s.className = i === 1 ? "circ" : "sq22";
-      l.appendChild(s);
-    });
-    add(l, "실제 런처 48dp (각 / 원형)");
-    row.appendChild(shots);
-    out.appendChild(row);
+  const shots = document.createElement("div"); shots.className = "shots";
+  const add = (node, cap) => {
+    const d = document.createElement("div"); d.className = "shot";
+    d.appendChild(node);
+    const p = document.createElement("div"); p.className = "cap"; p.textContent = cap;
+    d.appendChild(p); shots.appendChild(d);
+  };
+  const big = render(v, 130, false); big.className = "sq22"; add(big, "130px");
+  const circ = render(v, 76, true); circ.className = "circ"; add(circ, "maskable · 원형");
+  const l = document.createElement("div"); l.className = "launcher";
+  [0, 1].forEach(i => {
+    const s = render(v, 96, i === 1);
+    s.style.width = "48px"; s.style.height = "48px";
+    s.className = i === 1 ? "circ" : "sq22";
+    l.appendChild(s);
   });
+  add(l, "실제 런처 48dp");
+  row.appendChild(shots);
+  return row;
+}
+function draw() {
+  out.innerHTML = "";
+  const h1 = document.createElement("h2");
+  h1.textContent = "B안 — あ + 가 대각 분할 (색 조합)";
+  out.appendChild(h1);
+  VARIANTS.forEach(v => out.appendChild(card(v)));
+  const h2 = document.createElement("h2");
+  h2.textContent = "검토했던 다른 방향";
+  out.appendChild(h2);
+  OTHERS.forEach(v => out.appendChild(card(v)));
 }
 
 // 폰트가 준비된 뒤에 그린다 — 캔버스는 폴백 폰트로 한번 그리면 되돌릴 수 없다
@@ -156,6 +174,6 @@ Promise.all([
   document.fonts.load('700 100px "Nanum Myeongjo"'),
   document.fonts.load('700 100px "Zen Old Mincho"'),
   document.fonts.load('700 100px "Noto Serif KR"')
-]).then(() => document.fonts.ready).then(render);
+]).then(() => document.fonts.ready).then(draw);
 </script>
 </body></html>
